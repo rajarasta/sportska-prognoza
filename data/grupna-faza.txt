@@ -1,0 +1,72 @@
+1	11.06.2026	A	Meksiko – Južna Afrika
+2	11.06.2026	A	Južna Koreja – Češka
+3	12.06.2026	B	Kanada – Bosna i Hercegovina
+4	12.06.2026	D	SAD – Paragvaj
+5	13.06.2026	C	Haiti – Škotska
+6	13.06.2026	D	Australija – Turska
+7	13.06.2026	C	Brazil – Maroko
+8	13.06.2026	B	Katar – Švicarska
+9	14.06.2026	E	Obala Bjelokosti – Ekvador
+10	14.06.2026	E	Njemačka – Curaçao
+11	14.06.2026	F	Nizozemska – Japan
+12	14.06.2026	F	Švedska – Tunis
+13	15.06.2026	H	Saudijska Arabija – Urugvaj
+14	15.06.2026	H	Španjolska – Zelenortski Otoci
+15	15.06.2026	G	Iran – Novi Zeland
+16	15.06.2026	G	Belgija – Egipat
+17	16.06.2026	I	Francuska – Senegal
+18	16.06.2026	I	Irak – Norveška
+19	16.06.2026	J	Argentina – Alžir
+20	16.06.2026	J	Austrija – Jordan
+21	17.06.2026	L	Gana – Panama
+22	17.06.2026	L	Engleska – Hrvatska
+23	17.06.2026	K	Portugal – DR Kongo
+24	17.06.2026	K	Uzbekistan – Kolumbija
+25	18.06.2026	A	Češka – Južna Afrika
+26	18.06.2026	B	Švicarska – Bosna i Hercegovina
+27	18.06.2026	B	Kanada – Katar
+28	18.06.2026	A	Meksiko – Južna Koreja
+29	19.06.2026	C	Brazil – Haiti
+30	19.06.2026	C	Škotska – Maroko
+31	19.06.2026	D	Turska – Paragvaj
+32	19.06.2026	D	SAD – Australija
+33	20.06.2026	E	Njemačka – Obala Bjelokosti
+34	20.06.2026	E	Ekvador – Curaçao
+35	20.06.2026	F	Nizozemska – Švedska
+36	20.06.2026	F	Tunis – Japan
+37	21.06.2026	H	Urugvaj – Zelenortski Otoci
+38	21.06.2026	H	Španjolska – Saudijska Arabija
+39	21.06.2026	G	Belgija – Iran
+40	21.06.2026	G	Novi Zeland – Egipat
+41	22.06.2026	I	Norveška – Senegal
+42	22.06.2026	I	Francuska – Irak
+43	22.06.2026	J	Argentina – Austrija
+44	22.06.2026	J	Jordan – Alžir
+45	23.06.2026	L	Engleska – Gana
+46	23.06.2026	L	Panama – Hrvatska
+47	23.06.2026	K	Portugal – Uzbekistan
+48	23.06.2026	K	Kolumbija – DR Kongo
+49	24.06.2026	C	Škotska – Brazil
+50	24.06.2026	C	Maroko – Haiti
+51	24.06.2026	B	Švicarska – Kanada
+52	24.06.2026	B	Bosna i Hercegovina – Katar
+53	24.06.2026	A	Češka – Meksiko
+54	24.06.2026	A	Južna Afrika – Južna Koreja
+55	25.06.2026	E	Curaçao – Obala Bjelokosti
+56	25.06.2026	E	Ekvador – Njemačka
+57	25.06.2026	F	Japan – Švedska
+58	25.06.2026	F	Tunis – Nizozemska
+59	25.06.2026	D	Turska – SAD
+60	25.06.2026	D	Paragvaj – Australija
+61	26.06.2026	I	Norveška – Francuska
+62	26.06.2026	I	Senegal – Irak
+63	26.06.2026	G	Egipat – Iran
+64	26.06.2026	G	Novi Zeland – Belgija
+65	26.06.2026	H	Zelenortski Otoci – Saudijska Arabija
+66	26.06.2026	H	Urugvaj – Španjolska
+67	27.06.2026	L	Panama – Engleska
+68	27.06.2026	L	Hrvatska – Gana
+69	27.06.2026	J	Alžir – Austrija
+70	27.06.2026	J	Jordan – Argentina
+71	27.06.2026	K	Kolumbija – Portugal
+72	27.06.2026	K	DR Kongo – Uzbekistan

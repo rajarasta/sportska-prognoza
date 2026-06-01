@@ -1,0 +1,47 @@
+# Firebase App Hosting configuration.
+# https://firebase.google.com/docs/app-hosting/configure
+runConfig:
+  minInstances: 0
+  maxInstances: 2
+  cpu: 1
+  memoryMiB: 512
+  concurrency: 80
+
+env:
+  # ── Firebase Web SDK (public; must be available at BUILD so they inline into
+  #    the client bundle, otherwise browser Firebase init ships `undefined`). ──
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyCQvdDi0Lfn6B_IcqSa3lsugkAuXvApBms"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "sportska-prognoza-e6b10.firebaseapp.com"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "sportska-prognoza-e6b10"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "sportska-prognoza-e6b10.firebasestorage.app"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "473247439936"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:473247439936:web:cc9d9fbf4ae26d5df253a5"
+    availability: [BUILD, RUNTIME]
+  - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    value: "G-2453LV05Y4"
+    availability: [BUILD, RUNTIME]
+
+  # ── Server-side runtime config ──
+  - variable: AUTH_COOKIE_NAME
+    value: "__session"
+    availability: [RUNTIME]
+  - variable: LEAGUE_ADMIN_EMAILS
+    value: "rastocic.josip@gmail.com"
+    availability: [RUNTIME]
+
+  # ── Secrets (Cloud Secret Manager). Create before first deploy:
+  #    firebase apphosting:secrets:set AUTH_COOKIE_SIGNATURE_KEYS ──
+  - variable: AUTH_COOKIE_SIGNATURE_KEYS
+    secret: AUTH_COOKIE_SIGNATURE_KEYS
+    availability: [RUNTIME]
