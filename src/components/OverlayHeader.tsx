@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/icons";
 import { C, FONT, SAFE } from "@/lib/tokens";
@@ -8,10 +9,12 @@ export default function OverlayHeader({
   title,
   accent,
   fallback = "/raspored",
+  right,
 }: {
   title: string;
   accent?: string; // dark hero bg; otherwise white
   fallback?: string;
+  right?: ReactNode; // optional top-right action (e.g. a Save button)
 }) {
   const router = useRouter();
   const back = () => {
@@ -49,9 +52,22 @@ export default function OverlayHeader({
       >
         <Icon.back />
       </button>
-      <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 18, color: accent ? "#fff" : C.ink, whiteSpace: "nowrap" }}>
+      <div
+        style={{
+          flex: 1,
+          minWidth: 0,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          fontFamily: FONT.archivo,
+          fontWeight: 800,
+          fontSize: 18,
+          color: accent ? "#fff" : C.ink,
+          whiteSpace: "nowrap",
+        }}
+      >
         {title}
       </div>
+      {right}
     </div>
   );
 }

@@ -48,10 +48,38 @@ export default function ChallengeSetupClient({ ctx }: { ctx: Ctx }) {
   };
 
   return (
-    <main style={{ minHeight: "100dvh", background: C.bg, display: "flex", flexDirection: "column" }}>
-      <OverlayHeader title="Pokreni izazov" accent="#1A1206" fallback={`/match/${ctx.matchId}`} />
+    <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: SAFE.nav }}>
+      <OverlayHeader
+        title="Pokreni izazov"
+        accent="#1A1206"
+        fallback={`/match/${ctx.matchId}`}
+        right={
+          <button
+            onClick={send}
+            disabled={same || pending}
+            style={{
+              height: 38,
+              padding: "0 14px",
+              borderRadius: 11,
+              border: "none",
+              background: same || pending ? C.disabledBtn : C.gold,
+              color: same || pending ? "#fff" : C.ink,
+              fontFamily: FONT.archivo,
+              fontWeight: 800,
+              fontSize: 13.5,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              whiteSpace: "nowrap",
+              cursor: same || pending ? "default" : "pointer",
+            }}
+          >
+            {pending ? "Šaljem…" : <><Icon.bolt s={16} /> Pošalji {h}:{a}</>}
+          </button>
+        }
+      />
 
-      <div style={{ padding: "16px 18px 0", flex: 1 }}>
+      <div style={{ padding: "16px 18px 0" }}>
         {/* opponent */}
         <div style={{ background: C.ink, borderRadius: 18, padding: "14px 16px", display: "flex", alignItems: "center", gap: 13, color: "#fff", marginBottom: 16 }}>
           <Avatar p={{ init: ctx.targetInit, color: ctx.targetColor }} size={42} />
@@ -97,32 +125,6 @@ export default function ChallengeSetupClient({ ctx }: { ctx: Ctx }) {
             {error}
           </div>
         )}
-      </div>
-
-      <div style={{ padding: `14px 18px ${SAFE.nav}px` }}>
-        <button
-          onClick={send}
-          disabled={same || pending}
-          style={{
-            width: "100%",
-            height: 54,
-            border: "none",
-            borderRadius: 16,
-            background: same || pending ? C.disabledBtn : C.gold,
-            color: same || pending ? "#fff" : C.ink,
-            boxShadow: same || pending ? "none" : "0 8px 20px rgba(242,184,7,.34)",
-            fontFamily: FONT.archivo,
-            fontWeight: 800,
-            fontSize: 16.5,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            cursor: same || pending ? "default" : "pointer",
-          }}
-        >
-          {pending ? "Šaljem…" : <><Icon.bolt s={18} /> Pošalji izazov {h}:{a}</>}
-        </button>
       </div>
 
       {toast && (

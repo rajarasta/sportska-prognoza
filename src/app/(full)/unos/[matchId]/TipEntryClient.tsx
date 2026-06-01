@@ -53,10 +53,38 @@ export default function TipEntryClient({
   };
 
   return (
-    <main style={{ minHeight: "100dvh", background: C.bg, display: "flex", flexDirection: "column" }}>
-      <OverlayHeader title="Unesi tip" fallback={`/match/${match.id}`} />
+    <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: SAFE.nav }}>
+      <OverlayHeader
+        title="Unesi tip"
+        fallback={`/match/${match.id}`}
+        right={
+          <button
+            onClick={save}
+            disabled={pending}
+            style={{
+              height: 38,
+              padding: "0 14px",
+              borderRadius: 11,
+              border: "none",
+              background: pending ? C.disabledBtn : C.red,
+              color: "#fff",
+              fontFamily: FONT.archivo,
+              fontWeight: 800,
+              fontSize: 13.5,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              whiteSpace: "nowrap",
+              cursor: pending ? "default" : "pointer",
+              boxShadow: pending ? "none" : "0 6px 14px rgba(228,0,43,.32)",
+            }}
+          >
+            {pending ? "Spremam…" : <><Icon.check s={16} /> Spremi {h}:{a}</>}
+          </button>
+        }
+      />
 
-      <div style={{ padding: "8px 20px 0", flex: 1 }}>
+      <div style={{ padding: "8px 20px 0" }}>
         <div style={{ textAlign: "center", fontFamily: FONT.archivo, fontWeight: 700, fontSize: 13, color: C.muted, marginBottom: 18 }}>
           {matchTag(match)} · {dayHeading(match.date, today)} · {match.time}
         </div>
@@ -79,32 +107,6 @@ export default function TipEntryClient({
             {error}
           </div>
         )}
-      </div>
-
-      <div style={{ padding: `14px 20px ${SAFE.nav}px` }}>
-        <button
-          onClick={save}
-          disabled={pending}
-          style={{
-            width: "100%",
-            height: 54,
-            border: "none",
-            borderRadius: 16,
-            background: pending ? C.disabledBtn : C.red,
-            color: "#fff",
-            boxShadow: pending ? "none" : "0 8px 20px rgba(228,0,43,.32)",
-            fontFamily: FONT.archivo,
-            fontWeight: 800,
-            fontSize: 16.5,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 8,
-            cursor: pending ? "default" : "pointer",
-          }}
-        >
-          {pending ? "Spremam…" : <><Icon.check /> Spremi tip {h}:{a}</>}
-        </button>
       </div>
 
       {toast && (
