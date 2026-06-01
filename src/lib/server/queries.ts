@@ -201,6 +201,27 @@ export async function getMyHistory(uid: string): Promise<HistoryRow[]> {
   return rows.reverse();
 }
 
+// ── Allowlist (admin) ──
+export interface AllowlistEntry {
+  email: string;
+  addedAt: number;
+  joined: boolean; // has logged in (has a user doc)
+}
+
+export async function getAllowlist(): Promise<AllowlistEntry[]> {
+  const [snap, users] = await Promise.all([
+    adminDb.collection(COLLECTIONS.allowlist).get(),
+    getAllUsers(),
+  ]);
+  const joined = new Set(users.map((u) => u.email.toLowerCase()));
+  return snap.docs
+    .map((d) => {
+      const a = d.data() as { email: string; addedAt: number };
+      return { email: a.email, addedAt: a.addedAt, joined: joined.has(a.email.toLowerCase()) };
+    })
+    .sort((a, b) => a.email.localeCompare(b.email));
+}
+
 export async function getMyDuels(uid: string): Promise<DuelDoc[]> {
   const [asChallenger, asOpponent] = await Promise.all([
     adminDb.collection(COLLECTIONS.duels).where("challengerUid", "==", uid).get(),

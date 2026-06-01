@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/server/session";
-import { isAdminEmail } from "@/lib/server/allowlist";
-import { getAllMatches } from "@/lib/server/queries";
+import { isAdminEmail, getAdminEmails } from "@/lib/server/allowlist";
+import { getAllMatches, getAllowlist } from "@/lib/server/queries";
 import AdminClient, { type AdminMatch } from "./AdminClient";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,8 @@ export default async function AdminPage() {
   const { email } = await requireUser();
   if (!isAdminEmail(email)) redirect("/bodovi");
 
-  const matches = await getAllMatches();
+  const [matches, allowlist] = await Promise.all([getAllMatches(), getAllowlist()]);
+  const adminEmails = getAdminEmails();
   const list: AdminMatch[] = matches
     .slice()
     .sort((a, b) => a.no - b.no)
@@ -26,5 +27,5 @@ export default async function AdminPage() {
       res: m.res,
     }));
 
-  return <AdminClient matches={list} />;
+  return <AdminClient matches={list} allowlist={allowlist} adminEmails={adminEmails} />;
 }

@@ -11,6 +11,10 @@ export function isAdminEmail(email: string): boolean {
   return adminEmails.includes(email.toLowerCase());
 }
 
+export function getAdminEmails(): string[] {
+  return [...adminEmails];
+}
+
 /** A user may enter the league if they are an admin or on the Firestore allowlist. */
 export async function isEmailAllowed(email: string): Promise<boolean> {
   const e = email.toLowerCase();

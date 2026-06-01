@@ -66,7 +66,6 @@ export default function LoginPage() {
         <picture>
           <source srcSet={`/login/${img}.avif`} type="image/avif" />
           <source srcSet={`/login/${img}.webp`} type="image/webp" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`/login/${img}.webp`}
             alt="Slika dana"

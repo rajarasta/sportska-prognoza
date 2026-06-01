@@ -6,6 +6,8 @@ import OverlayHeader from "@/components/OverlayHeader";
 import { Tag, TeamBadge, teamName } from "@/components/ui";
 import { C, FONT } from "@/lib/tokens";
 import { enterResult, clearResult } from "@/app/actions/results";
+import MembersManager from "./MembersManager";
+import type { AllowlistEntry } from "@/lib/server/queries";
 import type { MatchStatus, Scoreline } from "@/lib/types";
 
 export interface AdminMatch {
@@ -20,11 +22,24 @@ export interface AdminMatch {
   res: Scoreline | null;
 }
 
-export default function AdminClient({ matches }: { matches: AdminMatch[] }) {
+export default function AdminClient({
+  matches,
+  allowlist,
+  adminEmails,
+}: {
+  matches: AdminMatch[];
+  allowlist: AllowlistEntry[];
+  adminEmails: string[];
+}) {
   return (
     <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: 40 }}>
-      <OverlayHeader title="Unos rezultata" fallback="/profil" />
+      <OverlayHeader title="Admin" fallback="/profil" />
       <div style={{ padding: "12px 16px 0" }}>
+        <MembersManager allowlist={allowlist} adminEmails={adminEmails} />
+
+        <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 14, letterSpacing: 1.2, textTransform: "uppercase", color: C.muted, margin: "4px 2px 6px" }}>
+          Rezultati
+        </div>
         <div style={{ fontFamily: FONT.archivo, fontWeight: 600, fontSize: 13, color: C.muted, marginBottom: 14, lineHeight: 1.5 }}>
           Unesi konačan rezultat — bodovi, izazovi i ljestvica se preračunaju automatski.
         </div>
