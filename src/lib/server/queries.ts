@@ -125,22 +125,31 @@ export function isLocked(m: MatchDoc, now = Date.now()): boolean {
   return m.status === "final" || m.status === "live" || now >= m.kickoff;
 }
 
+export interface MyDuelResult {
+  points: number; // duel-adjusted points I earned on this match
+  decided: boolean; // someone hit exact (a clear winner); else both-miss normal scoring
+  won: boolean;
+  opponentName: string;
+}
+
 export interface MatchDetailData {
   match: MatchDoc;
   myPick: PredictionDoc | null;
   others: OtherPick[];
   revealOthers: boolean; // peek-prevention: only after I've tipped, or once final
-  breakdown: ReturnType<typeof scorePick> | null;
+  breakdown: ReturnType<typeof scorePick> | null; // null when a duel decided my points
+  myDuel: MyDuelResult | null;
 }
 
 export async function getMatchDetail(id: string, uid: string): Promise<MatchDetailData | null> {
   const match = await getMatch(id);
   if (!match) return null;
-  const [myPick, predsSnap, usersMap, cfg] = await Promise.all([
+  const [myPick, predsSnap, usersMap, cfg, duelsSnap] = await Promise.all([
     getMyPick(uid, id),
     adminDb.collection(COLLECTIONS.predictions).where("matchId", "==", id).get(),
     getUsersMap(),
     getConfig(),
+    adminDb.collection(COLLECTIONS.duels).where("matchId", "==", id).get(),
   ]);
 
   const isFinal = match.status === "final" && match.res;
@@ -153,22 +162,42 @@ export async function getMatchDetail(id: string, uid: string): Promise<MatchDeta
         .filter((p) => p.uid !== uid)
         .map((p) => {
           const u = usersMap.get(p.uid);
+          // duel-adjusted contribution (falls back to base for non-duel matches)
+          const points = p.effectivePoints ?? p.points;
           return {
             uid: p.uid,
             name: u?.name ?? "Igrač",
             init: u?.init ?? "?",
             color: u?.color ?? "#888",
             pick: p.pick,
-            points: p.points,
+            points,
           };
         })
         .sort((a, b) => (b.points ?? 0) - (a.points ?? 0) || a.name.localeCompare(b.name))
     : [];
 
-  const breakdown =
-    isFinal && myPick ? scorePick(myPick.pick, match.res as Scoreline, scoreConfigFrom(cfg)) : null;
+  // Was I in a (resolved) duel on this match? If so, the duel — not the Gaussian
+  // breakdown — decided my points.
+  const myDuelDoc = duelsSnap.docs
+    .map((d) => d.data() as DuelDoc)
+    .find((d) => d.challengerUid === uid || d.opponentUid === uid);
+  let myDuel: MyDuelResult | null = null;
+  if (isFinal && myPick && myDuelDoc) {
+    const oppUid = myDuelDoc.challengerUid === uid ? myDuelDoc.opponentUid : myDuelDoc.challengerUid;
+    myDuel = {
+      points: myPick.effectivePoints ?? myPick.points ?? 0,
+      decided: myDuelDoc.winnerUid != null,
+      won: myDuelDoc.winnerUid === uid,
+      opponentName: usersMap.get(oppUid)?.name ?? "protivnik",
+    };
+  }
 
-  return { match, myPick, others, revealOthers, breakdown };
+  const breakdown =
+    isFinal && myPick && !myDuel
+      ? scorePick(myPick.pick, match.res as Scoreline, scoreConfigFrom(cfg))
+      : null;
+
+  return { match, myPick, others, revealOthers, breakdown, myDuel };
 }
 
 // ── Profile ──
@@ -194,7 +223,7 @@ export async function getMyHistory(uid: string): Promise<HistoryRow[]> {
       away: m.away,
       res: m.res,
       pick: p.pick,
-      earned: p.points ?? 0,
+      earned: p.effectivePoints ?? p.points ?? 0,
     });
   }
   // most recent first

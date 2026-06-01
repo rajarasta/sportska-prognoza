@@ -25,6 +25,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "invalid-token" }, { status: 401 });
   }
 
+  // Only trust an email the IdP actually proved the caller owns: a verified
+  // Google sign-in. This is the sole authorization choke point, so reject any
+  // unverified / non-Google token before the allowlist check (defense-in-depth
+  // against another provider being enabled later and self-asserting an email).
+  if (!decoded.email_verified || decoded.firebase?.sign_in_provider !== "google.com") {
+    return NextResponse.json({ error: "not-allowed" }, { status: 403 });
+  }
+
   const email = decoded.email?.toLowerCase() ?? null;
   if (!email || !(await isEmailAllowed(email))) {
     return NextResponse.json({ error: "not-allowed" }, { status: 403 });

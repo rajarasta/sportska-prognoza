@@ -13,10 +13,13 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
  * (matches + predictions + duels). Safe to run after any result change.
  *
  * Scoring model:
- *  • Base: each league prediction scores via scorePick (stored on the pred doc,
- *    shown in breakdowns/history).
- *  • Duels override the two participants' points for that match (double-or-nothing).
- *  • A player's total = sum of per-match points (duel-adjusted where applicable).
+ *  • Base: each league prediction scores via scorePick → stored on `points`
+ *    (drives the Gaussian breakdown for non-duel matches).
+ *  • Duels override the participants' points for that match (double-or-nothing).
+ *    The duel-adjusted per-match value is stored on `effectivePoints` and is what
+ *    the user's total + history + others-list use.
+ *  • Creation enforces at most one duel per player per match, so the override
+ *    map never collides.
  */
 export async function recomputeScores(): Promise<void> {
   const cfg = await getConfig();
@@ -41,18 +44,18 @@ export async function recomputeScores(): Promise<void> {
   const bw = adminDb.bulkWriter();
   const key = (uid: string, matchId: string) => `${uid}|${matchId}`;
 
-  // 1. base prediction scoring
+  // 1. base prediction scoring (compute now, write after duel overrides are known)
   const basePoints = new Map<string, number>();
-  for (const p of preds) {
+  type PredMeta = { id: string; uid: string; matchId: string; points: number | null; exact: boolean | null };
+  const predMeta: PredMeta[] = preds.map((p) => {
     const m = matchById.get(p.matchId);
     if (isFinal(m)) {
       const r = scorePick(p.pick, m.res, sc);
       basePoints.set(key(p.uid, p.matchId), r.total);
-      bw.update(adminDb.collection(COLLECTIONS.predictions).doc(p.id), { points: r.total, exact: r.exact });
-    } else {
-      bw.update(adminDb.collection(COLLECTIONS.predictions).doc(p.id), { points: null, exact: null });
+      return { id: p.id, uid: p.uid, matchId: p.matchId, points: r.total, exact: r.exact };
     }
-  }
+    return { id: p.id, uid: p.uid, matchId: p.matchId, points: null, exact: null };
+  });
 
   // 2. duel resolution → override participant match points
   const override = new Map<string, number>();
@@ -83,6 +86,17 @@ export async function recomputeScores(): Promise<void> {
         resolvedAt: null,
       });
     }
+  }
+
+  // 1b. write predictions with base points + duel-adjusted effectivePoints
+  for (const pm of predMeta) {
+    const k = key(pm.uid, pm.matchId);
+    const effective = pm.points == null ? null : override.has(k) ? override.get(k)! : pm.points;
+    bw.update(adminDb.collection(COLLECTIONS.predictions).doc(pm.id), {
+      points: pm.points,
+      exact: pm.exact,
+      effectivePoints: effective,
+    });
   }
 
   // 3. per-user aggregates (effective per-match points = override ?? base)
@@ -128,6 +142,11 @@ export async function recomputeScores(): Promise<void> {
       weekly[w] = rv;
       best = Math.max(best, rv);
     }
+    const newRank = rankByUid.get(u.uid) ?? null;
+    const oldRank = u.rank ?? null;
+    // Only advance prevRank when the rank actually changed, so a redundant
+    // recompute (e.g. re-saving the same result) doesn't blank the movement arrow.
+    const prevRank = newRank === oldRank ? (u.prevRank ?? null) : oldRank;
     bw.update(adminDb.collection(COLLECTIONS.users).doc(u.uid), {
       totalPoints: round2(a?.total ?? 0),
       weeklyPoints: weekly,
@@ -135,8 +154,8 @@ export async function recomputeScores(): Promise<void> {
       exactCount: a?.exact ?? 0,
       duelsWon: won.get(u.uid) ?? 0,
       duelsLost: lost.get(u.uid) ?? 0,
-      prevRank: u.rank ?? null,
-      rank: rankByUid.get(u.uid) ?? null,
+      prevRank,
+      rank: newRank,
     });
   }
 

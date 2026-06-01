@@ -52,7 +52,8 @@ export interface PredictionDoc {
   pick: Scoreline;
   submittedAt: number;
   // written by the server only, after the match is final:
-  points: number | null;
+  points: number | null; // base scoring of this pick (Gauss + bonus / exact)
+  effectivePoints?: number | null; // duel-adjusted contribution to the user's total
   exact: boolean | null;
 }
 

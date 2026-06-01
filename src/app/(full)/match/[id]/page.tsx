@@ -20,7 +20,7 @@ export default async function MatchDetailPage({
   const data = await getMatchDetail(id, uid);
   if (!data) notFound();
 
-  const { match: m, myPick, others, revealOthers, breakdown: brk } = data;
+  const { match: m, myPick, others, revealOthers, breakdown: brk, myDuel } = data;
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Zagreb" });
   const done = m.status === "final" && m.res;
   const locked = done || m.status === "live" || Date.now() >= m.kickoff;
@@ -103,6 +103,19 @@ export default async function MatchDetailPage({
             >
               <Icon.plus /> Unesi tip
             </Link>
+          )}
+
+          {myDuel && (
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px dashed #ECEEF2", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 14, color: myDuel.won ? C.green : myDuel.decided ? C.muted : C.ink }}>
+                {myDuel.won
+                  ? `⚡ Izazov dobiven vs ${myDuel.opponentName}`
+                  : myDuel.decided
+                    ? `Izazov izgubljen vs ${myDuel.opponentName}`
+                    : `⚡ Izazov neriješen vs ${myDuel.opponentName}`}
+              </span>
+              <span style={{ fontFamily: FONT.anton, fontSize: 22, color: myDuel.won ? C.green : C.ink }}>+{myDuel.points.toFixed(1)}</span>
+            </div>
           )}
 
           {brk && (

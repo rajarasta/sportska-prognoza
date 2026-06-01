@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/server/session";
 import { isAdminEmail } from "@/lib/server/allowlist";
-import { adminDb } from "@/lib/firebase/admin";
+import { adminAuth, adminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS } from "@/lib/collections";
 import type { AllowlistDoc } from "@/lib/types";
 
@@ -35,6 +35,15 @@ export async function removeAllowlistEmail(emailRaw: string): Promise<ActionResu
 
   const email = emailRaw.trim().toLowerCase();
   await adminDb.collection(COLLECTIONS.allowlist).doc(email).delete();
+
+  // Kill any active session for the removed player (they lose access within ~1h).
+  try {
+    const snap = await adminDb.collection(COLLECTIONS.users).where("email", "==", email).limit(1).get();
+    if (!snap.empty) await adminAuth.revokeRefreshTokens(snap.docs[0].id);
+  } catch {
+    // best-effort
+  }
+
   revalidatePath("/admin");
   return { ok: true };
 }

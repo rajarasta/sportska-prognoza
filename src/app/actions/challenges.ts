@@ -50,11 +50,21 @@ export async function createChallenge(
   const tokenRef = adminDb.collection(COLLECTIONS.tokenBalances).doc(tokenBalanceId(uid, week));
   const duelId = `${matchId}_${uid}_${targetUid}`;
   const duelRef = adminDb.collection(COLLECTIONS.duels).doc(duelId);
+  const matchDuels = adminDb.collection(COLLECTIONS.duels).where("matchId", "==", matchId);
 
   try {
     await adminDb.runTransaction(async (tx) => {
-      const [tokenDoc, duelDoc] = await Promise.all([tx.get(tokenRef), tx.get(duelRef)]);
-      if (duelDoc.exists) throw new Error("DUP");
+      const [tokenDoc, existing] = await Promise.all([tx.get(tokenRef), tx.get(matchDuels)]);
+      // At most one duel per player per match — covers duplicate, reverse (B→A
+      // after A→B), and multi-opponent cases, so scoring overrides never collide.
+      const conflict = existing.docs.some((doc) => {
+        const x = doc.data() as DuelDoc;
+        return (
+          [x.challengerUid, x.opponentUid].includes(uid) ||
+          [x.challengerUid, x.opponentUid].includes(targetUid)
+        );
+      });
+      if (conflict) throw new Error("DUP");
       const remaining = tokenDoc.exists ? (tokenDoc.data() as { remaining: number }).remaining : tokensPerWeek;
       if (remaining <= 0) throw new Error("NO_TOKENS");
 
@@ -76,7 +86,7 @@ export async function createChallenge(
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";
-    if (msg === "DUP") return { ok: false, error: "Već si izazvao ovog igrača na ovoj utakmici." };
+    if (msg === "DUP") return { ok: false, error: "Već postoji izazov na ovoj utakmici za tebe ili protivnika." };
     if (msg === "NO_TOKENS") return { ok: false, error: "Nemaš više izazova ovaj tjedan." };
     return { ok: false, error: "Izazov nije uspio. Pokušaj ponovno." };
   }

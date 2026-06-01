@@ -44,6 +44,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   // Run on every route except Next internals, the login/logout API endpoints
-  // (handled by our own route handlers), and static files (paths with a dot).
-  matcher: ["/((?!_next|api/login|api/logout|.*\\.).*)"],
+  // (handled by our own route handlers), and static assets by extension. We
+  // match on specific extensions (not "any dot") so dynamic route segments that
+  // could contain a dot still get gated.
+  matcher: [
+    "/((?!_next|api/login|api/logout|.*\\.(?:ico|png|jpg|jpeg|svg|gif|webp|avif|js|css|txt|xml|json|woff2?|map)$).*)",
+  ],
 };

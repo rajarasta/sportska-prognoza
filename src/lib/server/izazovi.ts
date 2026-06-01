@@ -6,6 +6,7 @@ import {
   getConfig,
   getMatch,
   getMyDuels,
+  getMyPick,
   getUsersMap,
 } from "@/lib/server/queries";
 import type { DuelDoc, MatchDoc, PredictionDoc, Scoreline } from "@/lib/types";
@@ -49,6 +50,7 @@ export interface DuelView {
 
 export interface ChallengeTarget {
   matchId: string;
+  week: number;
   home: string;
   away: string;
   group: string;
@@ -62,8 +64,9 @@ export interface ChallengeTarget {
 
 export interface IzazoviData {
   activeWeek: number;
-  tokensRemaining: number;
+  tokensRemaining: number; // active week (hero display)
   tokensPerWeek: number;
+  tokensByWeek: Record<number, number>; // remaining per week that has targets
   duels: DuelView[];
   targets: ChallengeTarget[];
 }
@@ -142,6 +145,7 @@ export async function getIzazoviData(uid: string): Promise<IzazoviData> {
       const u = usersMap.get(p.uid);
       targets.push({
         matchId: m.id,
+        week: m.week,
         home: m.home,
         away: m.away,
         group: m.group,
@@ -155,7 +159,17 @@ export async function getIzazoviData(uid: string): Promise<IzazoviData> {
     }
   }
 
-  return { activeWeek, tokensRemaining, tokensPerWeek, duels: duelViews, targets };
+  // Remaining tokens per week that actually has challengeable targets (+ active
+  // week), so each target row can be gated by ITS week's balance.
+  const weeksNeeded = new Set<number>([activeWeek, ...targets.map((t) => t.week)]);
+  const tokensByWeek: Record<number, number> = {};
+  await Promise.all(
+    [...weeksNeeded].map(async (w) => {
+      tokensByWeek[w] = w === activeWeek ? tokensRemaining : await getTokenRemaining(uid, w, tokensPerWeek);
+    }),
+  );
+
+  return { activeWeek, tokensRemaining, tokensPerWeek, tokensByWeek, duels: duelViews, targets };
 }
 
 export interface ChallengeContext {
@@ -173,13 +187,16 @@ export async function getChallengeContext(
   targetUid: string,
   uid: string,
 ): Promise<ChallengeContext | null> {
-  const [match, cfg, usersMap, targetPredSnap] = await Promise.all([
+  const [match, cfg, usersMap, targetPredSnap, myPick] = await Promise.all([
     getMatch(matchId),
     getConfig(),
     getUsersMap(),
     adminDb.collection(COLLECTIONS.predictions).doc(`${matchId}_${targetUid}`).get(),
+    getMyPick(uid, matchId),
   ]);
   if (!match || !targetPredSnap.exists || targetUid === uid) return null;
+  // Peek-prevention: only reveal the opponent's pick once I've tipped (or final).
+  if (match.status !== "final" && !myPick) return null;
 
   const targetPred = targetPredSnap.data() as PredictionDoc;
   const tokensPerWeek = cfg?.tokensPerWeek ?? DEFAULT_TOKENS_PER_WEEK;

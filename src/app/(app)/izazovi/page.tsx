@@ -9,8 +9,7 @@ export const dynamic = "force-dynamic";
 
 export default async function IzazoviPage() {
   const { uid } = await requireUser();
-  const { tokensRemaining, tokensPerWeek, duels, targets } = await getIzazoviData(uid);
-  const canChallenge = tokensRemaining > 0;
+  const { tokensRemaining, tokensPerWeek, tokensByWeek, duels, targets } = await getIzazoviData(uid);
 
   return (
     <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: SAFE.nav }}>
@@ -83,7 +82,7 @@ export default async function IzazoviPage() {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {targets.map((t) => (
-              <TargetRow key={`${t.matchId}_${t.targetUid}`} t={t} enabled={canChallenge} />
+              <TargetRow key={`${t.matchId}_${t.targetUid}`} t={t} enabled={(tokensByWeek[t.week] ?? 0) > 0} />
             ))}
           </div>
         )}
