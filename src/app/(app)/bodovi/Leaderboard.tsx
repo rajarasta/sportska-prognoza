@@ -25,7 +25,10 @@ export default function Leaderboard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [standings, view]);
 
-  const options = [{ k: "total", label: "Ukupno" }, ...weeks.map((w) => ({ k: String(w.n), label: `T${w.n}` }))];
+  const options = [
+    { k: "total", label: "Ukupno" },
+    ...weeks.map((w) => ({ k: String(w.n), label: w.n === 0 ? "Test" : `T${w.n}` })),
+  ];
   const hasPodium = ranked.length >= 3;
   const top3 = ranked.slice(0, 3);
   const rest = hasPodium ? ranked.slice(3) : ranked;

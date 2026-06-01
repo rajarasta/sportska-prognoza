@@ -5,6 +5,9 @@ import type { WeekDef } from "@/lib/types";
 export const SEASON = "SP 2026";
 
 export const WEEKS: WeekDef[] = [
+  // Week 0 — the pre-WC trial round (international friendlies). Single-day window so
+  // weekOf() returns 0 for these and they never collide with the group-stage weeks.
+  { n: 0, label: "Probni krug", range: "Prijateljske · 1. lip", start: "2026-06-01", end: "2026-06-01" },
   { n: 1, label: "Tjedan 1", range: "11.–17. lip", start: "2026-06-11", end: "2026-06-17" },
   { n: 2, label: "Tjedan 2", range: "18.–23. lip", start: "2026-06-18", end: "2026-06-23" },
   { n: 3, label: "Tjedan 3", range: "24.–27. lip", start: "2026-06-24", end: "2026-06-27" },

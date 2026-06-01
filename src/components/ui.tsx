@@ -8,6 +8,11 @@ export function teamName(code: string): string {
   return (TEAMS[code] ?? UNKNOWN_TEAM).name;
 }
 
+/** Label for a match's competition slot: "Prijateljska" for friendlies, else "Grupa X". */
+export function matchTag(m: { friendly?: boolean; group: string }): string {
+  return m.friendly ? "Prijateljska" : `Grupa ${m.group}`;
+}
+
 /** Gradient circle with the FIFA code. */
 export function TeamBadge({ code, size = 44 }: { code: string; size?: number }) {
   const t = TEAMS[code] ?? UNKNOWN_TEAM;

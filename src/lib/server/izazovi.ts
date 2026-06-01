@@ -9,10 +9,16 @@ import {
   getMyPick,
   getUsersMap,
 } from "@/lib/server/queries";
-import type { DuelDoc, MatchDoc, PredictionDoc, Scoreline } from "@/lib/types";
+import type { DuelDoc, LeagueConfigDoc, MatchDoc, PredictionDoc, Scoreline } from "@/lib/types";
 
 export const DEFAULT_TOKENS_PER_WEEK = 3;
 export const DEFAULT_STAKE = 6;
+
+/** Challenge-token allowance for a given week — honours per-week overrides
+ *  (e.g. the trial round's `{ "0": 1 }`), falling back to the league default. */
+export function tokensForWeek(cfg: LeagueConfigDoc | null, week: number): number {
+  return cfg?.tokensByWeek?.[String(week)] ?? cfg?.tokensPerWeek ?? DEFAULT_TOKENS_PER_WEEK;
+}
 
 /** Remaining challenge tokens for a user in a week (absent doc = full allowance). */
 export async function getTokenRemaining(uid: string, week: number, perWeek: number): Promise<number> {
@@ -81,8 +87,9 @@ export async function getIzazoviData(uid: string): Promise<IzazoviData> {
     adminDb.collection(COLLECTIONS.predictions).get(),
   ]);
 
-  const tokensPerWeek = cfg?.tokensPerWeek ?? DEFAULT_TOKENS_PER_WEEK;
   const activeWeek = computeActiveWeek(matches, now);
+  // Allowance for the active week (the hero renders this many pips) — week 0 = 1 in the trial.
+  const tokensPerWeek = tokensForWeek(cfg, activeWeek);
   const tokensRemaining = await getTokenRemaining(uid, activeWeek, tokensPerWeek);
 
   const matchById = new Map(matches.map((m) => [m.id, m]));
@@ -165,7 +172,7 @@ export async function getIzazoviData(uid: string): Promise<IzazoviData> {
   const tokensByWeek: Record<number, number> = {};
   await Promise.all(
     [...weeksNeeded].map(async (w) => {
-      tokensByWeek[w] = w === activeWeek ? tokensRemaining : await getTokenRemaining(uid, w, tokensPerWeek);
+      tokensByWeek[w] = w === activeWeek ? tokensRemaining : await getTokenRemaining(uid, w, tokensForWeek(cfg, w));
     }),
   );
 
@@ -199,8 +206,7 @@ export async function getChallengeContext(
   if (match.status !== "final" && !myPick) return null;
 
   const targetPred = targetPredSnap.data() as PredictionDoc;
-  const tokensPerWeek = cfg?.tokensPerWeek ?? DEFAULT_TOKENS_PER_WEEK;
-  const tokensRemaining = await getTokenRemaining(uid, match.week, tokensPerWeek);
+  const tokensRemaining = await getTokenRemaining(uid, match.week, tokensForWeek(cfg, match.week));
   const u = usersMap.get(targetUid);
 
   return {

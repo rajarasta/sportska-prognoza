@@ -52,6 +52,14 @@ export const TEAMS: Record<string, { name: string; c1: string; c2: string }> = {
   COD: { name: "DR Kongo", c1: "#007FFF", c2: "#0059B3" },
   UZB: { name: "Uzbekistan", c1: "#1EB53A", c2: "#138527" },
   COL: { name: "Kolumbija", c1: "#1C3FAA", c2: "#0E2470" },
+
+  // Non-WC nations — used only by the pre-WC trial round (international friendlies).
+  MDV: { name: "Maldivi", c1: "#D21034", c2: "#8A0A1E" },
+  AFG: { name: "Afganistan", c1: "#BE0000", c2: "#7A0000" },
+  SVK: { name: "Slovačka", c1: "#0B4EA2", c2: "#07306B" },
+  MLT: { name: "Malta", c1: "#CF142B", c2: "#8A0A1E" },
+  BUL: { name: "Bugarska", c1: "#00966E", c2: "#00674C" },
+  MNE: { name: "Crna Gora", c1: "#C40308", c2: "#8A0205" },
 };
 
 /** Croatian display name → FIFA code (for parsing the schedule file). */

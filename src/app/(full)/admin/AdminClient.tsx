@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import OverlayHeader from "@/components/OverlayHeader";
-import { Tag, TeamBadge, teamName } from "@/components/ui";
+import { Tag, TeamBadge, teamName, matchTag } from "@/components/ui";
 import { C, FONT } from "@/lib/tokens";
 import { enterResult, clearResult } from "@/app/actions/results";
 import MembersManager from "./MembersManager";
@@ -14,6 +14,7 @@ export interface AdminMatch {
   id: string;
   no: number;
   group: string;
+  friendly?: boolean;
   home: string;
   away: string;
   date: string;
@@ -104,7 +105,7 @@ function MatchRow({ m }: { m: AdminMatch }) {
     <div style={{ background: C.surface, borderRadius: 14, padding: "10px 12px", border: "1px solid #F1F2F5" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
         <span style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 11, color: C.faint }}>#{m.no}</span>
-        <Tag tone="gray">Gr {m.group}</Tag>
+        <Tag tone={m.friendly ? "gold" : "gray"}>{matchTag(m)}</Tag>
         <span style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 11.5, color: C.muted }}>{m.date} · {m.time}</span>
         {final && <Tag tone="green">FINAL</Tag>}
       </div>

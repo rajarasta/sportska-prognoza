@@ -24,7 +24,7 @@ export default async function UnosPage({
 
   return (
     <TipEntryClient
-      match={{ id: match.id, group: match.group, home: match.home, away: match.away, date: match.date, time: match.time }}
+      match={{ id: match.id, group: match.group, friendly: match.friendly ?? false, home: match.home, away: match.away, date: match.date, time: match.time }}
       initial={myPick?.pick ?? null}
       today={today}
     />

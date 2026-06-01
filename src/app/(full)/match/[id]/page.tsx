@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/server/session";
 import { getMatchDetail } from "@/lib/server/queries";
 import OverlayHeader from "@/components/OverlayHeader";
-import { Avatar, Score, SectionTitle, Tag, TeamBadge, teamName } from "@/components/ui";
+import { Avatar, Score, SectionTitle, Tag, TeamBadge, teamName, matchTag } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { C, FONT, SHADOW } from "@/lib/tokens";
 import { dayHeading } from "@/lib/data/season";
@@ -28,7 +28,7 @@ export default async function MatchDetailPage({
 
   return (
     <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: 40 }}>
-      <OverlayHeader title={`Grupa ${m.group}`} accent={C.ink} />
+      <OverlayHeader title={matchTag(m)} accent={C.ink} />
 
       {/* hero */}
       <div style={{ background: C.ink, color: "#fff", padding: "4px 20px 28px", borderRadius: "0 0 28px 28px" }}>

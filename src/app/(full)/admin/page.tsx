@@ -14,11 +14,12 @@ export default async function AdminPage() {
   const adminEmails = getAdminEmails();
   const list: AdminMatch[] = matches
     .slice()
-    .sort((a, b) => a.no - b.no)
+    .sort((a, b) => a.kickoff - b.kickoff) // chronological: today's trial friendlies on top
     .map((m) => ({
       id: m.id,
       no: m.no,
       group: m.group,
+      friendly: m.friendly ?? false,
       home: m.home,
       away: m.away,
       date: m.date,

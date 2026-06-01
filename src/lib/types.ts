@@ -43,6 +43,7 @@ export interface MatchDoc {
   away: string; // team code
   status: MatchStatus;
   res: Scoreline | null; // actual result once final
+  friendly?: boolean; // true for non-WC test/friendly fixtures (no group)
 }
 
 export interface PredictionDoc {
@@ -101,6 +102,7 @@ export interface LeagueConfigDoc {
   exactPoints: number; // 3
   goalBonus: number; // 0.3
   tokensPerWeek: number; // 3
+  tokensByWeek?: Record<string, number>; // per-week allowance override, e.g. { "0": 1 } for the trial
   duelStake: number; // 6
   season: string; // 'SP 2026'
   weeks: WeekDef[];

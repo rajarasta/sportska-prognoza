@@ -7,6 +7,7 @@ import { initializeApp, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { NAME_TO_CODE, teamDocs } from "../src/lib/data/teams";
 import { weekOf, ddmmyyyyToIso, kickoffMs, WEEKS, SEASON } from "../src/lib/data/season";
+import { FRIENDLY_MATCHES } from "../src/lib/data/test-run";
 import { COLLECTIONS, CONFIG_DOC_ID } from "../src/lib/collections";
 import type { LeagueConfigDoc, MatchDoc, Scoreline } from "../src/lib/types";
 
@@ -60,12 +61,14 @@ function parseSchedule(): MatchDoc[] {
 
 async function main() {
   const teams = teamDocs();
-  const matches = parseSchedule();
+  // Group-stage fixtures + the pre-WC trial friendlies (week 0).
+  const matches = [...parseSchedule(), ...FRIENDLY_MATCHES];
   const config: LeagueConfigDoc = {
     sigma: 1.9,
     exactPoints: 3,
     goalBonus: 0.3,
     tokensPerWeek: 3,
+    tokensByWeek: { "0": 1 }, // trial round: everyone gets exactly 1 Izazov token
     duelStake: 6,
     season: SEASON,
     weeks: WEEKS,

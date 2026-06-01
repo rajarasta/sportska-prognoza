@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Score, Tag, TeamBadge, teamName } from "@/components/ui";
+import { Score, Tag, TeamBadge, teamName, matchTag } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
 import { MONTHS_FULL, WD_SHORT_MON, croShort, dayHeading, weekOf } from "@/lib/data/season";
@@ -246,7 +246,7 @@ function MatchCard({ m, nowMs }: { m: MatchView; nowMs: number }) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <Tag tone="gray">Grupa {m.group}</Tag>
+        <Tag tone={m.friendly ? "gold" : "gray"}>{matchTag(m)}</Tag>
         <span style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12, color: C.muted }}>
           {done ? <Tag tone="green">ZAVRŠENO</Tag> : <><Icon.clock s={13} />{m.time}</>}
         </span>

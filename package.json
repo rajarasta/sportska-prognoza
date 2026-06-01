@@ -12,7 +12,9 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "optimize:images": "node scripts/optimize-images.mjs",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "crawl": "tsx scripts/crawl-results.ts",
+    "grant:tokens": "tsx scripts/grant-test-tokens.ts"
   },
   "dependencies": {
     "firebase": "^12.14.0",

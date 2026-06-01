@@ -40,8 +40,23 @@ env:
     value: "rastocic.josip@gmail.com"
     availability: [RUNTIME]
 
+  # ── Results crawler (/api/cron/crawl-results + `npm run crawl`) ──
+  - variable: RESULTS_PROVIDER
+    value: "thesportsdb"
+    availability: [RUNTIME]
+
   # ── Secrets (Cloud Secret Manager). Create before first deploy:
   #    firebase apphosting:secrets:set AUTH_COOKIE_SIGNATURE_KEYS ──
   - variable: AUTH_COOKIE_SIGNATURE_KEYS
     secret: AUTH_COOKIE_SIGNATURE_KEYS
     availability: [RUNTIME]
+  # Protects the crawl-results cron endpoint. Create + grant before deploy:
+  #    firebase apphosting:secrets:set CRON_SECRET
+  #    firebase apphosting:secrets:grantaccess CRON_SECRET --backend sportska-prognoza
+  - variable: CRON_SECRET
+    secret: CRON_SECRET
+    availability: [RUNTIME]
+  # Optional: only if you set a paid TheSportsDB key (free test key "123" is the default).
+  #  - variable: RESULTS_API_KEY
+  #    secret: RESULTS_API_KEY
+  #    availability: [RUNTIME]

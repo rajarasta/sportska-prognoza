@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import OverlayHeader from "@/components/OverlayHeader";
-import { TeamBadge, teamName } from "@/components/ui";
+import { TeamBadge, teamName, matchTag } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { C, FONT } from "@/lib/tokens";
 import { dayHeading } from "@/lib/data/season";
@@ -13,6 +13,7 @@ import type { Scoreline } from "@/lib/types";
 interface MatchLite {
   id: string;
   group: string;
+  friendly?: boolean;
   home: string;
   away: string;
   date: string;
@@ -57,7 +58,7 @@ export default function TipEntryClient({
 
       <div style={{ padding: "8px 20px 0", flex: 1 }}>
         <div style={{ textAlign: "center", fontFamily: FONT.archivo, fontWeight: 700, fontSize: 13, color: C.muted, marginBottom: 18 }}>
-          Grupa {match.group} · {dayHeading(match.date, today)} · {match.time}
+          {matchTag(match)} · {dayHeading(match.date, today)} · {match.time}
         </div>
 
         <div style={{ background: C.surface, borderRadius: 22, padding: "26px 16px", display: "flex", alignItems: "flex-start", gap: 8, boxShadow: "0 1px 3px rgba(14,17,22,.05)" }}>

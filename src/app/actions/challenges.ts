@@ -5,7 +5,7 @@ import { requireUser } from "@/lib/server/session";
 import { adminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, tokenBalanceId } from "@/lib/collections";
 import { getConfig, getMatch } from "@/lib/server/queries";
-import { DEFAULT_STAKE, DEFAULT_TOKENS_PER_WEEK } from "@/lib/server/izazovi";
+import { DEFAULT_STAKE, tokensForWeek } from "@/lib/server/izazovi";
 import type { DuelDoc, PredictionDoc, Scoreline } from "@/lib/types";
 
 export interface ActionResult {
@@ -44,9 +44,9 @@ export async function createChallenge(
     return { ok: false, error: "Ne možeš igrati isti rezultat kao protivnik." };
   }
 
-  const tokensPerWeek = cfg?.tokensPerWeek ?? DEFAULT_TOKENS_PER_WEEK;
-  const stake = cfg?.duelStake ?? DEFAULT_STAKE;
   const week = match.week;
+  const tokensPerWeek = tokensForWeek(cfg, week);
+  const stake = cfg?.duelStake ?? DEFAULT_STAKE;
   const tokenRef = adminDb.collection(COLLECTIONS.tokenBalances).doc(tokenBalanceId(uid, week));
   const duelId = `${matchId}_${uid}_${targetUid}`;
   const duelRef = adminDb.collection(COLLECTIONS.duels).doc(duelId);
