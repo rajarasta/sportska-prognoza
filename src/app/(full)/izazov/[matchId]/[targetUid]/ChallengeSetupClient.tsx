@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import OverlayHeader from "@/components/OverlayHeader";
 import { Avatar, Score, TeamBadge, teamName } from "@/components/ui";
 import { Icon } from "@/components/icons";
-import { C, FONT } from "@/lib/tokens";
+import { C, FONT, SAFE } from "@/lib/tokens";
 import { createChallenge } from "@/app/actions/challenges";
 import type { Scoreline } from "@/lib/types";
 
@@ -99,7 +99,7 @@ export default function ChallengeSetupClient({ ctx }: { ctx: Ctx }) {
         )}
       </div>
 
-      <div style={{ padding: "14px 18px 36px" }}>
+      <div style={{ padding: `14px 18px ${SAFE.nav}px` }}>
         <button
           onClick={send}
           disabled={same || pending}

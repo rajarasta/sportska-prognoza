@@ -5,7 +5,7 @@ import { getMatchDetail } from "@/lib/server/queries";
 import OverlayHeader from "@/components/OverlayHeader";
 import { Avatar, Score, SectionTitle, Tag, TeamBadge, teamName, matchTag } from "@/components/ui";
 import { Icon } from "@/components/icons";
-import { C, FONT, SHADOW } from "@/lib/tokens";
+import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
 import { dayHeading } from "@/lib/data/season";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +27,7 @@ export default async function MatchDetailPage({
   const statusLabel = done ? "Završeno" : m.status === "live" ? "Uživo" : "Uskoro";
 
   return (
-    <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: 40 }}>
+    <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: SAFE.nav }}>
       <OverlayHeader title={matchTag(m)} accent={C.ink} />
 
       {/* hero */}

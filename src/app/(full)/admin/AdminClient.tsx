@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import OverlayHeader from "@/components/OverlayHeader";
 import { Tag, TeamBadge, teamName, matchTag } from "@/components/ui";
-import { C, FONT } from "@/lib/tokens";
+import { C, FONT, SAFE } from "@/lib/tokens";
 import { enterResult, clearResult } from "@/app/actions/results";
 import MembersManager from "./MembersManager";
 import type { AllowlistEntry } from "@/lib/server/queries";
@@ -33,7 +33,7 @@ export default function AdminClient({
   adminEmails: string[];
 }) {
   return (
-    <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: 40 }}>
+    <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: SAFE.nav }}>
       <OverlayHeader title="Admin" fallback="/profil" />
       <div style={{ padding: "12px 16px 0" }}>
         <MembersManager allowlist={allowlist} adminEmails={adminEmails} />

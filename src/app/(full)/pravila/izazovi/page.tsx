@@ -1,7 +1,7 @@
 import OverlayHeader from "@/components/OverlayHeader";
 import { Score, Tag } from "@/components/ui";
 import { Icon } from "@/components/icons";
-import { C, FONT, SHADOW } from "@/lib/tokens";
+import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
 
 const STEPS = [
   { n: 1, t: "Imaš 3 izazova svaki tjedan", b: "Token se troši kad pošalješ izazov." },
@@ -13,7 +13,7 @@ const STEPS = [
 
 export default function PravilaIzazovi() {
   return (
-    <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: 40 }}>
+    <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: SAFE.nav }}>
       <OverlayHeader title="Kako rade izazovi" accent="#1A1206" fallback="/pravila" />
       <div style={{ background: C.challengeHero, color: "#fff", padding: "2px 22px 26px", borderRadius: "0 0 28px 28px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", right: -30, top: -10, opacity: 0.12, color: C.gold }}>

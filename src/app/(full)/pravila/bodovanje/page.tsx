@@ -1,10 +1,10 @@
 import OverlayHeader from "@/components/OverlayHeader";
 import { Score } from "@/components/ui";
-import { C, FONT, SHADOW } from "@/lib/tokens";
+import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
 
 export default function PravilaBodovanje() {
   return (
-    <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: 40 }}>
+    <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: SAFE.nav }}>
       <OverlayHeader title="Kako se boduje" accent={C.red} fallback="/pravila" />
       <div style={{ background: C.red, color: "#fff", padding: "2px 22px 26px", borderRadius: "0 0 28px 28px" }}>
         <div style={{ fontFamily: FONT.anton, fontSize: 30, lineHeight: 1, marginBottom: 8 }}>SKUPLJANJE BODOVA</div>

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import OverlayHeader from "@/components/OverlayHeader";
 import { TeamBadge, teamName, matchTag } from "@/components/ui";
 import { Icon } from "@/components/icons";
-import { C, FONT } from "@/lib/tokens";
+import { C, FONT, SAFE } from "@/lib/tokens";
 import { dayHeading } from "@/lib/data/season";
 import { submitPrediction } from "@/app/actions/predictions";
 import type { Scoreline } from "@/lib/types";
@@ -81,7 +81,7 @@ export default function TipEntryClient({
         )}
       </div>
 
-      <div style={{ padding: "14px 20px 36px" }}>
+      <div style={{ padding: `14px 20px ${SAFE.nav}px` }}>
         <button
           onClick={save}
           disabled={pending}
