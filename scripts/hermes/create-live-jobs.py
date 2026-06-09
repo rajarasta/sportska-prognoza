@@ -6,18 +6,23 @@ This is the Hermes side of the live pipeline: a browser agent scrapes the chosen
 version-1 snapshot JSON into this repo's live-inbox/, where `npm run watch:live`
 ingests it (live scores + provisional points, finals + recompute at the end).
 
-Run with the HERMES venv python (so the cron API + deps resolve):
+Run with the HERMES venv python (so the cron API + deps resolve), shortly before
+the first kickoff (the POLL uses a bounded interval, so it starts ~one interval after
+creation and the window can safely cross midnight — WC matches in Zagreb time often
+run 21:00 → ~06:00 next day):
 
   ~/.hermes/hermes-agent/venv/bin/python scripts/hermes/create-live-jobs.py \
-      --date 2026-06-11 --start 13 --end 23 --end-hhmm 23:35 \
-      --url "https://<croatian-live-score-site>/<wc-fixtures-page>"
+      --date 2026-06-11 --hours 10 --wrap-at 2026-06-12T06:30 \
+      --url "https://www.rezultati.com/nogomet/svijet/svjetsko-prvenstvo/"
 
-  # preview the jobs without creating them:
+  # preview the jobs (prompts + schedules) without creating them:
   ... --dry-run
 
-The CLI `hermes cron create` cannot set enabled_toolsets, so we call create_job
-directly to scope each job to the browser+file toolsets (token-lean, least-privilege)
-with workdir = this repo. The gateway (60s tick) picks the new jobs up automatically.
+--date is the TOURNAMENT matchday (pinned into every snapshot); the agent matches
+fixtures by team name, not the local date the site shows. The CLI `hermes cron create`
+cannot set enabled_toolsets, so we call create_job directly to scope each job to the
+browser+file toolsets (token-lean, least-privilege), workdir = this repo. The gateway
+(60s tick) picks the new jobs up automatically.
 
 Cleanup after the day:  hermes cron list   then   hermes cron rm <job_id>
 """
@@ -67,6 +72,10 @@ def poll_prompt(date_iso: str, fixtures: list[str], url: str) -> str:
         "   Rules: score:null + status:\"upcoming\" for not-yet-started games; status:\"live\" with the "
         "running score for in-play; status:\"final\" with the finished score for FT games. minute is "
         "optional (omit or null when unknown).\n"
+        f"   IMPORTANT — the \"date\" field MUST be exactly \"{date_iso}\" (the tournament matchday). Do NOT "
+        "use the calendar date the site shows: rezultati.com displays local Zagreb time, so a match can "
+        f"appear under the NEXT day (e.g. \"12.06. 04:00\") yet still belong to matchday {date_iso}. Match "
+        "fixtures by TEAM NAMES from the list above, not by the displayed date.\n"
         f"4. Using the file toolset, write that JSON to a NEW unique file:\n"
         f"   {INBOX}/{date_iso}-<capturedAt>.json   (use the same epoch-ms you put in capturedAt; never overwrite an existing file).\n"
         "5. Reply with ONE line: which fixtures are live/final and the file you wrote.\n\n"
@@ -88,12 +97,11 @@ def wrapup_prompt(date_iso: str, fixtures: list[str], url: str) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--date", required=True, help="matchday YYYY-MM-DD (Europe/Zagreb)")
-    ap.add_argument("--start", type=int, required=True, help="first kickoff HOUR (0-23, local)")
-    ap.add_argument("--end", type=int, required=True, help="last hour to keep polling (0-23, local)")
-    ap.add_argument("--end-hhmm", required=True, help="wrap-up time HH:MM (local)")
+    ap.add_argument("--date", required=True, help="tournament matchday YYYY-MM-DD (pinned into snapshots)")
     ap.add_argument("--url", required=True, help="live-score page the agent scrapes")
+    ap.add_argument("--hours", type=float, default=6.0, help="poll window length in hours; run near first kickoff (default 6)")
     ap.add_argument("--every", type=int, default=10, help="poll interval minutes (default 10)")
+    ap.add_argument("--wrap-at", required=True, help="wrap-up one-shot timestamp, ISO e.g. 2026-06-12T06:30 (may be next day)")
     ap.add_argument("--deliver", default="local", help="cron delivery (local | discord:<id>)")
     ap.add_argument("--dry-run", action="store_true", help="print the jobs, don't create them")
     args = ap.parse_args()
@@ -103,8 +111,10 @@ def main() -> int:
         print(f"No fixtures found for {args.date} in data/grupna-faza.txt", file=sys.stderr)
         return 1
 
-    poll_schedule = f"*/{args.every} {args.start}-{args.end} * * *"
-    poll_repeat = math.ceil(((args.end - args.start + 1) * 60) / args.every)
+    # Bounded interval (midnight-safe): first run ~one interval after creation, then
+    # every `--every` min for `repeat` runs covering the `--hours` window.
+    poll_schedule = f"every {args.every}m"
+    poll_repeat = math.ceil((args.hours * 60) / args.every)
     common = dict(
         enabled_toolsets=["browser", "file"],
         workdir=str(REPO),
@@ -115,8 +125,8 @@ def main() -> int:
         print(f"REPO         = {REPO}")
         print(f"INBOX        = {INBOX}")
         print(f"fixtures     = {fixtures}")
-        print(f"POLL job     : schedule='{poll_schedule}' repeat={poll_repeat} toolsets=browser,file")
-        print(f"WRAP-UP job  : schedule='{args.date}T{args.end_hhmm}' repeat=1")
+        print(f"POLL job     : schedule='{poll_schedule}' repeat={poll_repeat} (~{args.hours}h window) toolsets=browser,file")
+        print(f"WRAP-UP job  : schedule='{args.wrap_at}' repeat=1")
         print("\n--- POLL prompt ---\n" + poll_prompt(args.date, fixtures, args.url))
         print("\n--- WRAP-UP prompt ---\n" + wrapup_prompt(args.date, fixtures, args.url))
         print("\n(dry-run — nothing created)")
@@ -134,13 +144,13 @@ def main() -> int:
     )
     wrap = create_job(
         prompt=wrapup_prompt(args.date, fixtures, args.url),
-        schedule=f"{args.date}T{args.end_hhmm}",
+        schedule=args.wrap_at,
         name=f"WC wrap-up {args.date}",
         repeat=1,
         **common,
     )
     print(f"Created POLL job    {poll['id']}  ({poll_schedule}, x{poll_repeat})")
-    print(f"Created WRAP-UP job {wrap['id']}  ({args.date}T{args.end_hhmm}, x1)")
+    print(f"Created WRAP-UP job {wrap['id']}  ({args.wrap_at}, x1)")
     print(f"\nStart the watcher if it isn't running:\n  GOOGLE_APPLICATION_CREDENTIALS=<key.json> npm run watch:live")
     print("Cleanup later:  hermes cron list   then   hermes cron rm <job_id>")
     return 0

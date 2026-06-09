@@ -36,15 +36,27 @@ Hermes POLL cron (browser+file, every 10m, bounded)   Hermes WRAP-UP cron (once,
    GOOGLE_APPLICATION_CREDENTIALS=<serviceAccount.json> npm run watch:live   # under tmux/nohup
    ```
    Flags: `--dry-run` (read + log, no writes), `--once` (drain backlog + exit).
-2. **Arm the Hermes jobs** (owner supplies the Croatian site URL + the day's window):
+2. **Arm the Hermes jobs** — run shortly before the first kickoff (the POLL is a bounded
+   interval, so the window can safely cross midnight):
    ```bash
    ~/.hermes/hermes-agent/venv/bin/python scripts/hermes/create-live-jobs.py \
-     --date 2026-06-11 --start 13 --end 23 --end-hhmm 23:35 \
-     --url "https://<croatian-live-score-site>/<wc-fixtures>"      # add --dry-run to preview
+     --date 2026-06-11 --hours 10 --wrap-at 2026-06-12T06:30 \
+     --url "https://www.rezultati.com/nogomet/svijet/svjetsko-prvenstvo/"   # add --dry-run to preview
    ```
-   Creates a bounded POLL job (`*/10 <start>-<end> * * *`) + a one-shot WRAP-UP. Both
-   run with only the `browser`+`file` toolsets, workdir = this repo.
+   Creates a bounded POLL job (`every 10m`, repeat = window/interval) + a one-shot WRAP-UP,
+   both scoped to `browser`+`file`, workdir = this repo.
 3. **Cleanup** after the day: `hermes cron list` → `hermes cron rm <job_id>`.
+
+### Source site: rezultati.com (Croatian Flashscore)
+
+Verified working in headless agent-browser (2026-06-09 dry run): load the URL → dismiss
+the cookie consent by clicking **"Odbij sve"** → the **SP 2026** section lists every
+fixture as `DATE TIME · HOME · AWAY · homeScore · awayScore` with Croatian names that
+match our resolver exactly (scores show `-` until kickoff). **Timezone caveat:** rezultati
+shows local Zagreb time, so a North-American evening kickoff appears under the *next*
+calendar day (e.g. Južna Koreja–Češka shows `12.06 04:00` though it's matchday 11.06). The
+agent therefore pins `date` to the tournament `--date` and matches by team name, never by
+the displayed date — and the poll window is sized in hours (`--hours`) to span past midnight.
 
 ## Verify (offline, no prod)
 ```bash
