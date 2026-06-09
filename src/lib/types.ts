@@ -21,6 +21,10 @@ export interface UserDoc {
   prevRank?: number | null;
   duelsWon?: number;
   duelsLost?: number;
+  // provisional totals incl. live matches' possible points (live standings;
+  // maintained by runProvisional, never by the final recompute):
+  provTotalPoints?: number | null; // = totalPoints + Σ provPoints over live picks
+  provWeeklyPoints?: Record<string, number>;
 }
 
 export interface AllowlistDoc {
@@ -44,6 +48,10 @@ export interface MatchDoc {
   status: MatchStatus;
   res: Scoreline | null; // actual result once final
   friendly?: boolean; // true for non-WC test/friendly fixtures (no group)
+  // ── live state (written by the live-score watcher while status === "live") ──
+  liveRes?: Scoreline | null; // current in-progress score; cleared when finalized
+  minute?: number | null; // displayed match minute (for the UŽIVO badge)
+  liveUpdatedAt?: number | null; // epoch ms of the last live write (staleness UI)
 }
 
 export interface PredictionDoc {
@@ -56,6 +64,9 @@ export interface PredictionDoc {
   points: number | null; // base scoring of this pick (Gauss + bonus / exact)
   effectivePoints?: number | null; // duel-adjusted contribution to the user's total
   exact: boolean | null;
+  // provisional "possible points" vs the current live score (live matches only;
+  // never overrides the authoritative `points`/`effectivePoints`):
+  provPoints?: number | null;
 }
 
 export type DuelRole = "challenger" | "challenged";

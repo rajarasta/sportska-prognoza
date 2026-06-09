@@ -14,6 +14,8 @@
     "optimize:images": "node scripts/optimize-images.mjs",
     "seed": "tsx scripts/seed.ts",
     "crawl": "tsx scripts/crawl-results.ts",
+    "watch:live": "tsx scripts/watch-live.ts",
+    "verify:live": "tsx scripts/verify-live-resolve.ts && tsx scripts/verify-live-ingest.ts",
     "grant:tokens": "tsx scripts/grant-test-tokens.ts"
   },
   "dependencies": {
@@ -22,13 +24,15 @@
     "next": "15.5.18",
     "next-firebase-auth-edge": "^1.12.0",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "chokidar": "^3.6.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.18",
     "server-only": "^0.0.1",

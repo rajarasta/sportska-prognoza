@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/server/session";
 import { getMatchDetail } from "@/lib/server/queries";
 import OverlayHeader from "@/components/OverlayHeader";
+import LiveRefresher from "@/components/LiveRefresher";
 import { Avatar, Score, SectionTitle, Tag, TeamBadge, teamName, matchTag } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
@@ -20,14 +21,20 @@ export default async function MatchDetailPage({
   const data = await getMatchDetail(id, uid);
   if (!data) notFound();
 
-  const { match: m, myPick, others, revealOthers, breakdown: brk, myDuel } = data;
+  const { match: m, myPick, others, revealOthers, breakdown: brk, myDuel, provBreakdown: provBrk } = data;
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Zagreb" });
   const done = m.status === "final" && m.res;
+  const live = m.status === "live" && m.liveRes;
   const locked = done || m.status === "live" || Date.now() >= m.kickoff;
-  const statusLabel = done ? "Završeno" : m.status === "live" ? "Uživo" : "Uskoro";
+  const statusLabel = done
+    ? "Završeno"
+    : m.status === "live"
+      ? `Uživo${m.minute != null ? ` ${m.minute}'` : ""}`
+      : "Uskoro";
 
   return (
     <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: SAFE.nav }}>
+      <LiveRefresher active={m.status === "live"} />
       <OverlayHeader title={matchTag(m)} accent={C.ink} />
 
       {/* hero */}
@@ -43,6 +50,8 @@ export default async function MatchDetailPage({
           <div style={{ padding: "0 8px" }}>
             {done ? (
               <Score a={m.res![0]} b={m.res![1]} big tone="red" />
+            ) : live ? (
+              <Score a={m.liveRes![0]} b={m.liveRes![1]} big tone="red" />
             ) : (
               <div style={{ fontFamily: FONT.anton, fontSize: 26, color: C.muted }}>VS</div>
             )}
@@ -133,6 +142,25 @@ export default async function MatchDetailPage({
                     <span style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 14, color: C.ink }}>Ukupno</span>
                     <span style={{ fontFamily: FONT.anton, fontSize: 22, color: C.ink }}>+{brk.total.toFixed(2)}</span>
                   </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {provBrk && (
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px dashed #ECEEF2" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: provBrk.exact ? 0 : 8 }}>
+                <span style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 13.5, color: C.red }}>⚡ Mogući bodovi (uživo)</span>
+                <span style={{ fontFamily: FONT.anton, fontSize: 22, color: C.red }}>~{provBrk.total.toFixed(2)}</span>
+              </div>
+              {provBrk.exact ? (
+                <span style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12, color: C.muted }}>
+                  Trenutno točan rezultat — bodovi se zaključavaju na kraju utakmice.
+                </span>
+              ) : (
+                <>
+                  <BreakLine label="Gaussova krivulja (blizina)" val={provBrk.gauss} />
+                  <BreakLine label="Bonus za broj golova" val={provBrk.bonus} />
                 </>
               )}
             </div>

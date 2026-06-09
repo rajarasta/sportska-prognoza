@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Avatar, SectionTitle, Tag } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import LiveRefresher from "@/components/LiveRefresher";
 import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
 import type { Standing } from "@/lib/server/queries";
 import type { WeekDef } from "@/lib/types";
@@ -10,13 +11,18 @@ import type { WeekDef } from "@/lib/types";
 export default function Leaderboard({
   standings,
   weeks,
+  live = false,
 }: {
   standings: Standing[];
   weeks: WeekDef[];
+  live?: boolean;
 }) {
-  const [view, setView] = useState<string>("total");
+  const [view, setView] = useState<string>(live ? "live" : "total");
 
-  const pointsOf = (s: Standing) => (view === "total" ? s.points : s.weeklyPoints[view] ?? 0);
+  const prov = view === "live";
+  const pointsOf = (s: Standing) =>
+    view === "live" ? s.provPoints : view === "total" ? s.points : s.weeklyPoints[view] ?? 0;
+  const fmt = (s: Standing) => `${prov ? "~" : ""}${pointsOf(s).toFixed(1)}`;
 
   const ranked = useMemo(() => {
     const arr = [...standings];
@@ -27,6 +33,7 @@ export default function Leaderboard({
 
   const options = [
     { k: "total", label: "Ukupno" },
+    ...(live ? [{ k: "live", label: "⚡ Uživo" }] : []),
     ...weeks.map((w) => ({ k: String(w.n), label: w.n === 0 ? "Test" : `T${w.n}` })),
   ];
   const hasPodium = ranked.length >= 3;
@@ -35,6 +42,7 @@ export default function Leaderboard({
 
   return (
     <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: SAFE.nav }}>
+      <LiveRefresher active={live} />
       {/* header */}
       <div style={{ background: C.surface, padding: `${SAFE.top}px 20px 18px`, borderRadius: "0 0 26px 26px", boxShadow: "0 1px 0 #ECEEF2" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
@@ -63,7 +71,7 @@ export default function Leaderboard({
         </div>
 
         {hasPodium ? (
-          <Podium top3={top3} pointsOf={pointsOf} />
+          <Podium top3={top3} fmt={fmt} />
         ) : (
           <div style={{ textAlign: "center", padding: "22px 8px 6px", fontFamily: FONT.archivo, fontWeight: 700, fontSize: 13.5, color: C.muted }}>
             Ekipa se popunjava — pozovi još igrača da krene podij.
@@ -111,7 +119,7 @@ export default function Leaderboard({
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontFamily: FONT.anton, fontSize: 21, color: C.ink, lineHeight: 1 }}>{pointsOf(p).toFixed(1)}</div>
+                  <div style={{ fontFamily: FONT.anton, fontSize: 21, color: prov ? C.red : C.ink, lineHeight: 1 }}>{fmt(p)}</div>
                   <div style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 11, color: C.muted }}>{p.exact}× 🎯</div>
                 </div>
               </div>
@@ -123,7 +131,7 @@ export default function Leaderboard({
   );
 }
 
-function Podium({ top3, pointsOf }: { top3: Standing[]; pointsOf: (s: Standing) => number }) {
+function Podium({ top3, fmt }: { top3: Standing[]; fmt: (s: Standing) => string }) {
   const order = [top3[1], top3[0], top3[2]]; // 2 - 1 - 3
   const meta = [
     { h: 86, ring: "#C7CCD4", medal: "2", size: 56 },
@@ -142,7 +150,7 @@ function Podium({ top3, pointsOf }: { top3: Standing[]; pointsOf: (s: Standing) 
               {p.name}
               {mine && <span style={{ color: C.red, fontSize: 11 }}>● TI</span>}
             </div>
-            <div style={{ fontFamily: FONT.anton, fontSize: 22, color: C.ink, lineHeight: 1 }}>{pointsOf(p).toFixed(1)}</div>
+            <div style={{ fontFamily: FONT.anton, fontSize: 22, color: C.ink, lineHeight: 1 }}>{fmt(p)}</div>
             <div
               style={{
                 marginTop: 8,

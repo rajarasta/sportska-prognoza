@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Score, Tag, TeamBadge, teamName, matchTag } from "@/components/ui";
 import { Icon } from "@/components/icons";
+import LiveRefresher from "@/components/LiveRefresher";
 import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
 import { MONTHS_FULL, WD_SHORT_MON, croShort, dayHeading, weekOf } from "@/lib/data/season";
 import type { MatchView } from "@/lib/server/queries";
@@ -26,6 +27,7 @@ export default function RasporedClient({
     () => [...new Set(matches.map((m) => m.date))].sort(),
     [matches],
   );
+  const hasLive = useMemo(() => matches.some((m) => m.status === "live"), [matches]);
   const defaultDay = useMemo(
     () => matchDates.find((d) => d >= today) ?? matchDates[matchDates.length - 1] ?? today,
     [matchDates, today],
@@ -72,6 +74,7 @@ export default function RasporedClient({
 
   return (
     <main style={{ minHeight: "100dvh", background: C.bg, paddingBottom: SAFE.nav }}>
+      <LiveRefresher active={hasLive} />
       {/* sticky header + drawer */}
       <div style={{ position: "sticky", top: 0, zIndex: 45 }}>
         <div
@@ -228,9 +231,11 @@ export default function RasporedClient({
 
 function MatchCard({ m, nowMs }: { m: MatchView; nowMs: number }) {
   const done = m.status === "final" && m.res;
+  const live = m.status === "live" && m.liveRes;
   const locked = done || m.status === "live" || nowMs >= m.kickoff;
   const earned = m.earned ?? 0;
   const earnTone = earned >= 3 ? "green" : earned >= 1 ? "gold" : "gray";
+  const prov = m.provEarned ?? 0;
 
   return (
     <Link
@@ -248,7 +253,13 @@ function MatchCard({ m, nowMs }: { m: MatchView; nowMs: number }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <Tag tone={m.friendly ? "gold" : "gray"}>{matchTag(m)}</Tag>
         <span style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12, color: C.muted }}>
-          {done ? <Tag tone="green">ZAVRŠENO</Tag> : <><Icon.clock s={13} />{m.time}</>}
+          {done ? (
+            <Tag tone="green">ZAVRŠENO</Tag>
+          ) : live ? (
+            <Tag tone="live">UŽIVO{m.minute != null ? ` ${m.minute}'` : ""}</Tag>
+          ) : (
+            <><Icon.clock s={13} />{m.time}</>
+          )}
         </span>
       </div>
 
@@ -259,6 +270,8 @@ function MatchCard({ m, nowMs }: { m: MatchView; nowMs: number }) {
         </div>
         {done ? (
           <Score a={m.res![0]} b={m.res![1]} />
+        ) : live ? (
+          <Score a={m.liveRes![0]} b={m.liveRes![1]} tone="red" />
         ) : (
           <Score a={m.myPick ? m.myPick[0] : null} b={m.myPick ? m.myPick[1] : null} tone={m.myPick ? "ghost" : "open"} />
         )}
@@ -277,6 +290,13 @@ function MatchCard({ m, nowMs }: { m: MatchView; nowMs: number }) {
               {m.myPick ? `Tvoj tip ${m.myPick[0]}:${m.myPick[1]}` : "Nisi tipovao"}
             </span>
             {m.myPick && <Tag tone={earnTone}>+{earned.toFixed(1)} bodova</Tag>}
+          </>
+        ) : live ? (
+          <>
+            <span style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12.5, color: C.muted }}>
+              {m.myPick ? `Tvoj tip ${m.myPick[0]}:${m.myPick[1]}` : "Nisi tipovao"}
+            </span>
+            {m.myPick && <Tag tone="gold">Mogući +{prov.toFixed(1)}</Tag>}
           </>
         ) : m.myPick ? (
           <>

@@ -33,6 +33,9 @@ export interface Standing {
   weeklyPoints: Record<string, number>;
   exact: number;
   move: number; // prevRank - rank (positive = climbed)
+  // provisional totals incl. currently-live matches (== final when nothing is live):
+  provPoints: number;
+  provWeeklyPoints: Record<string, number>;
 }
 
 export async function getAllUsers(): Promise<UserDoc[]> {
@@ -61,6 +64,8 @@ export async function getLeaderboard(meUid: string): Promise<Standing[]> {
       weeklyPoints: u.weeklyPoints ?? {},
       exact: u.exactCount,
       move,
+      provPoints: u.provTotalPoints ?? u.totalPoints,
+      provWeeklyPoints: u.provWeeklyPoints ?? u.weeklyPoints ?? {},
     };
   });
 }
@@ -88,14 +93,20 @@ export async function getMyPredictions(uid: string): Promise<Map<string, Predict
 export interface MatchView extends MatchDoc {
   myPick: Scoreline | null;
   earned: number | null;
+  provEarned: number | null; // possible points vs the current live score
 }
 
 export async function getMatchViews(uid: string): Promise<MatchView[]> {
   const [matches, mine] = await Promise.all([getAllMatches(), getMyPredictions(uid)]);
   return matches.map((m) => {
     const p = mine.get(m.id);
-    return { ...m, myPick: p?.pick ?? null, earned: p?.points ?? null };
+    return { ...m, myPick: p?.pick ?? null, earned: p?.points ?? null, provEarned: p?.provPoints ?? null };
   });
+}
+
+/** True if any match is currently live (gates the live-refresh polling + UI). */
+export function anyLive(matches: MatchDoc[]): boolean {
+  return matches.some((m) => m.status === "live");
 }
 
 export async function getMatch(id: string): Promise<MatchDoc | null> {
@@ -139,6 +150,7 @@ export interface MatchDetailData {
   revealOthers: boolean; // peek-prevention: only after I've tipped, or once final
   breakdown: ReturnType<typeof scorePick> | null; // null when a duel decided my points
   myDuel: MyDuelResult | null;
+  provBreakdown: ReturnType<typeof scorePick> | null; // possible points vs the live score (live only)
 }
 
 export async function getMatchDetail(id: string, uid: string): Promise<MatchDetailData | null> {
@@ -197,7 +209,13 @@ export async function getMatchDetail(id: string, uid: string): Promise<MatchDeta
       ? scorePick(myPick.pick, match.res as Scoreline, scoreConfigFrom(cfg))
       : null;
 
-  return { match, myPick, others, revealOthers, breakdown, myDuel };
+  // Provisional "possible points" while the match is live (no duel 2× until final).
+  const provBreakdown =
+    match.status === "live" && match.liveRes && myPick
+      ? scorePick(myPick.pick, match.liveRes as Scoreline, scoreConfigFrom(cfg))
+      : null;
+
+  return { match, myPick, others, revealOthers, breakdown, myDuel, provBreakdown };
 }
 
 // ── Profile ──

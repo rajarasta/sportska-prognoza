@@ -50,6 +50,10 @@ serviceAccount*.json
 # design handoff (kept locally as reference, not shipped)
 /design/
 
+# live-score watcher inbox (scraped snapshots + processed/failed archives — local only)
+/live-inbox/*
+!/live-inbox/.gitkeep
+
 # Stray Python virtualenv accidentally created in the repo root (not part of the app)
 /bin/
 /lib/
