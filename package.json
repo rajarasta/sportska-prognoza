@@ -14,6 +14,7 @@
     "optimize:images": "node scripts/optimize-images.mjs",
     "seed": "tsx scripts/seed.ts",
     "crawl": "tsx scripts/crawl-results.ts",
+    "recompute": "tsx scripts/recompute.ts",
     "fix:kickoffs": "tsx scripts/fix-kickoffs.ts",
     "grant:tokens": "tsx scripts/grant-test-tokens.ts"
   },

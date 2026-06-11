@@ -192,8 +192,9 @@ export async function getMatchDetail(id: string, uid: string): Promise<MatchDeta
     };
   }
 
+  // Friendlies (Probni krug) award no points, so don't show a points breakdown.
   const breakdown =
-    isFinal && myPick && !myDuel
+    isFinal && myPick && !myDuel && !match.friendly
       ? scorePick(myPick.pick, match.res as Scoreline, scoreConfigFrom(cfg))
       : null;
 

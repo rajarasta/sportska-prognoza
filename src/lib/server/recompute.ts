@@ -53,6 +53,11 @@ export async function runRecompute(db: Firestore): Promise<void> {
 
   const isFinal = (m: MatchDoc | undefined): m is MatchDoc & { res: [number, number] } =>
     !!m && m.status === "final" && !!m.res;
+  // Group decision (2026-06-11): the week-0 "Probni krug" friendlies were a dry
+  // run — they award nothing. Only non-friendly finals count toward points,
+  // exact tallies and duel win/loss records.
+  const counts = (m: MatchDoc | undefined): m is MatchDoc & { res: [number, number] } =>
+    isFinal(m) && !m.friendly;
 
   const bw = db.bulkWriter();
   const key = (uid: string, matchId: string) => `${uid}|${matchId}`;
@@ -62,10 +67,14 @@ export async function runRecompute(db: Firestore): Promise<void> {
   type PredMeta = { id: string; uid: string; matchId: string; points: number | null; exact: boolean | null };
   const predMeta: PredMeta[] = preds.map((p) => {
     const m = matchById.get(p.matchId);
-    if (isFinal(m)) {
+    if (counts(m)) {
       const r = scorePick(p.pick, m.res, sc);
       basePoints.set(key(p.uid, p.matchId), r.total);
       return { id: p.id, uid: p.uid, matchId: p.matchId, points: r.total, exact: r.exact };
+    }
+    if (isFinal(m)) {
+      // friendly final: visible as played, worth zero
+      return { id: p.id, uid: p.uid, matchId: p.matchId, points: 0, exact: false };
     }
     return { id: p.id, uid: p.uid, matchId: p.matchId, points: null, exact: null };
   });
@@ -78,14 +87,18 @@ export async function runRecompute(db: Firestore): Promise<void> {
     const m = matchById.get(d.matchId);
     if (isFinal(m)) {
       const out = resolveDuel(d.challengerPick, d.opponentPick, m.res, sc);
-      override.set(key(d.challengerUid, d.matchId), out.challengerPoints);
-      override.set(key(d.opponentUid, d.matchId), out.opponentPoints);
       const winnerUid =
         out.winner === "challenger" ? d.challengerUid : out.winner === "opponent" ? d.opponentUid : null;
-      if (winnerUid) {
-        won.set(winnerUid, (won.get(winnerUid) ?? 0) + 1);
-        const loserUid = winnerUid === d.challengerUid ? d.opponentUid : d.challengerUid;
-        lost.set(loserUid, (lost.get(loserUid) ?? 0) + 1);
+      // Friendly duels resolve (so the izazov shows its outcome) but award no
+      // points and don't touch the win/loss record.
+      if (counts(m)) {
+        override.set(key(d.challengerUid, d.matchId), out.challengerPoints);
+        override.set(key(d.opponentUid, d.matchId), out.opponentPoints);
+        if (winnerUid) {
+          won.set(winnerUid, (won.get(winnerUid) ?? 0) + 1);
+          const loserUid = winnerUid === d.challengerUid ? d.opponentUid : d.challengerUid;
+          lost.set(loserUid, (lost.get(loserUid) ?? 0) + 1);
+        }
       }
       bw.update(db.collection(COLLECTIONS.duels).doc(d.id), {
         status: "resolved",
@@ -135,7 +148,7 @@ export async function runRecompute(db: Firestore): Promise<void> {
   }
   for (const p of preds) {
     const m = matchById.get(p.matchId);
-    if (isFinal(m) && isExact(p.pick, m.res)) ensure(p.uid).exact += 1;
+    if (counts(m) && isExact(p.pick, m.res)) ensure(p.uid).exact += 1;
   }
 
   // 4. ranking

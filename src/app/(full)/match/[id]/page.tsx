@@ -123,6 +123,12 @@ export default async function MatchDetailPage({
             </div>
           )}
 
+          {done && m.friendly && (
+            <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px dashed #ECEEF2", textAlign: "center", fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12.5, color: C.muted }}>
+              Probna utakmica — ne ulazi u bodovanje.
+            </div>
+          )}
+
           {brk && (
             <div style={{ marginTop: 14, paddingTop: 14, borderTop: "1px dashed #ECEEF2" }}>
               {brk.exact ? (
