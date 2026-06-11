@@ -4,44 +4,41 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/server/session";
 import { adminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, tokenBalanceId } from "@/lib/collections";
-import { getConfig, getMatch } from "@/lib/server/queries";
+import { getConfig, getMatch, getMyPick } from "@/lib/server/queries";
 import { DEFAULT_STAKE, tokensForWeek } from "@/lib/server/izazovi";
-import type { DuelDoc, PredictionDoc, Scoreline } from "@/lib/types";
+import type { DuelDoc, PredictionDoc } from "@/lib/types";
 
 export interface ActionResult {
   ok: boolean;
   error?: string;
 }
 
-const validScore = (n: number) => Number.isInteger(n) && n >= 0 && n <= 12;
-
-export async function createChallenge(
-  matchId: string,
-  targetUid: string,
-  pick: Scoreline,
-): Promise<ActionResult> {
+/** Challenge an opponent on a match. The duel is played with MY already-submitted
+ *  tip (tips are final once submitted), never a fresh score — otherwise seeing the
+ *  opponent's tip first would let me craft a counter-pick. */
+export async function createChallenge(matchId: string, targetUid: string): Promise<ActionResult> {
   const { uid } = await requireUser();
 
   if (targetUid === uid) return { ok: false, error: "Ne možeš izazvati sam sebe." };
-  if (!validScore(pick[0]) || !validScore(pick[1])) {
-    return { ok: false, error: "Rezultat mora biti između 0 i 12." };
-  }
 
-  const [match, cfg, targetSnap] = await Promise.all([
+  const [match, cfg, targetSnap, myPick] = await Promise.all([
     getMatch(matchId),
     getConfig(),
     adminDb.collection(COLLECTIONS.predictions).doc(`${matchId}_${targetUid}`).get(),
+    getMyPick(uid, matchId),
   ]);
 
   if (!match) return { ok: false, error: "Utakmica ne postoji." };
   if (match.status !== "upcoming" || Date.now() >= match.kickoff) {
     return { ok: false, error: "Utakmica je zaključana — izazov više nije moguć." };
   }
+  if (!myPick) return { ok: false, error: "Prvo predaj svoj tip — izazov se igra tvojim tipom." };
   if (!targetSnap.exists) return { ok: false, error: "Protivnik nema predani tip." };
 
+  const pick = myPick.pick;
   const targetPick = (targetSnap.data() as PredictionDoc).pick;
   if (pick[0] === targetPick[0] && pick[1] === targetPick[1]) {
-    return { ok: false, error: "Ne možeš igrati isti rezultat kao protivnik." };
+    return { ok: false, error: "Imate isti tip — takav izazov nije moguć." };
   }
 
   const week = match.week;

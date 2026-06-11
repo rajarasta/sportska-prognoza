@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/server/session";
 import { getChallengeContext } from "@/lib/server/izazovi";
+import { kickoffLabel } from "@/lib/data/season";
 import ChallengeSetupClient from "./ChallengeSetupClient";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +26,8 @@ export default async function ChallengePage({
         matchId: ctx.match.id,
         home: ctx.match.home,
         away: ctx.match.away,
-        time: ctx.match.time,
+        time: kickoffLabel(ctx.match.date, ctx.match.kickoff),
+        myPick: ctx.myPick,
         targetUid: ctx.targetUid,
         targetName: ctx.targetName,
         targetInit: ctx.targetInit,

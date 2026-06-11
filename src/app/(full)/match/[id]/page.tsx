@@ -6,7 +6,8 @@ import OverlayHeader from "@/components/OverlayHeader";
 import { Avatar, Score, SectionTitle, Tag, TeamBadge, teamName, matchTag } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
-import { dayHeading } from "@/lib/data/season";
+import { dayHeading, kickoffLabel } from "@/lib/data/season";
+import Countdown from "@/components/Countdown";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,15 @@ export default async function MatchDetailPage({
       {/* hero */}
       <div style={{ background: C.ink, color: "#fff", padding: "4px 20px 28px", borderRadius: "0 0 28px 28px" }}>
         <div style={{ textAlign: "center", fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12.5, color: C.muted, marginBottom: 16 }}>
-          {dayHeading(m.date, today)} · {m.time} · {statusLabel}
+          {dayHeading(m.date, today)} · {kickoffLabel(m.date, m.kickoff)} po HR vremenu · {statusLabel}
+          {!locked && (
+            <div style={{ marginTop: 8 }}>
+              <Countdown
+                kickoff={m.kickoff}
+                style={{ display: "inline-block", background: "rgba(255,255,255,.14)", borderRadius: 9, padding: "4px 11px", color: "#fff", fontSize: 12 }}
+              />
+            </div>
+          )}
         </div>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ flex: 1, textAlign: "center" }}>
@@ -63,20 +72,16 @@ export default async function MatchDetailPage({
               <Score a={myPick.pick[0]} b={myPick.pick[1]} big tone="ink" />
               <div style={{ flex: 1 }}>
                 <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 14.5, color: C.ink }}>
-                  {done ? "Tip predan" : locked ? "Tip zaključan" : "Tip aktivan"}
+                  {done ? "Tip predan" : locked ? "Tip zaključan" : "Tip predan"}
                 </div>
                 <div style={{ fontFamily: FONT.archivo, fontWeight: 600, fontSize: 12, color: C.muted }}>
-                  {done ? "Utakmica završena" : locked ? "Utakmica je počela" : "Možeš mijenjati do zvižduka"}
+                  {done
+                    ? "Utakmica završena"
+                    : locked
+                      ? "Utakmica je počela"
+                      : "Tip je konačan — vidiš tuđe tipove i možeš izazivati"}
                 </div>
               </div>
-              {!locked && (
-                <Link
-                  href={`/unos/${m.id}`}
-                  style={{ border: "1.5px solid #E2E5EA", background: "#fff", borderRadius: 11, padding: "9px 14px", fontFamily: FONT.archivo, fontWeight: 800, fontSize: 13, color: C.ink }}
-                >
-                  Uredi
-                </Link>
-              )}
             </div>
           ) : locked ? (
             <div style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 13.5, color: C.muted, textAlign: "center", padding: "6px 0" }}>

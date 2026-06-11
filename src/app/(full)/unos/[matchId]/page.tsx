@@ -19,13 +19,16 @@ export default async function UnosPage({
   const locked = match.status !== "upcoming" || Date.now() >= match.kickoff;
   if (locked) redirect(`/match/${matchId}`);
 
+  // One-shot tips: once submitted (others' tips revealed) there is no editing.
   const myPick = await getMyPick(uid, matchId);
+  if (myPick) redirect(`/match/${matchId}`);
+
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Zagreb" });
 
   return (
     <TipEntryClient
-      match={{ id: match.id, group: match.group, friendly: match.friendly ?? false, home: match.home, away: match.away, date: match.date, time: match.time }}
-      initial={myPick?.pick ?? null}
+      match={{ id: match.id, group: match.group, friendly: match.friendly ?? false, home: match.home, away: match.away, date: match.date, time: match.time, kickoff: match.kickoff }}
+      initial={null}
       today={today}
     />
   );

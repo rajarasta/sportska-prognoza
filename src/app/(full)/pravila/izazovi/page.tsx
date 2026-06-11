@@ -5,8 +5,8 @@ import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
 
 const STEPS = [
   { n: 1, t: "Imaš 3 izazova svaki tjedan", b: "Token se troši kad pošalješ izazov." },
-  { n: 2, t: "Izazivaš tuđi predani tip", b: "Samo na utakmice koje još nisu odigrane." },
-  { n: 3, t: "Igraš svojim rezultatom", b: "Pogodiš točan rezultat → 2× bodova, bez dodataka s Gaussove." },
+  { n: 2, t: "Izazivaš tuđi predani tip", b: "Samo na utakmice koje još nisu počele. Tuđe tipove vidiš tek kad predaš svoj." },
+  { n: 3, t: "Igraš svojim predanim tipom", b: "Duel se igra tipom koji si već predao (tip je konačan). Pogodiš točan rezultat → 2× bodova, bez dodataka s Gaussove." },
   { n: 4, t: "Promašiš → 0 bodova", b: "Ako protivnik pogodi, on nosi duplo, ti ništa." },
   { n: 5, t: "Oba promaše → normalno", b: "Obojica idete na standardno bodovanje (Gauss + 0,3), bez bonusa." },
 ];

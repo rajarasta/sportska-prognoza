@@ -14,6 +14,7 @@ interface Ctx {
   home: string;
   away: string;
   time: string;
+  myPick: Scoreline;
   targetUid: string;
   targetName: string;
   targetInit: string;
@@ -23,18 +24,17 @@ interface Ctx {
 
 export default function ChallengeSetupClient({ ctx }: { ctx: Ctx }) {
   const router = useRouter();
-  const [h, setH] = useState(2);
-  const [a, setA] = useState(1);
   const [pending, startTransition] = useTransition();
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const same = h === ctx.targetPick[0] && a === ctx.targetPick[1];
+  // The duel is played with my already-submitted tip — identical tips can't duel.
+  const same = ctx.myPick[0] === ctx.targetPick[0] && ctx.myPick[1] === ctx.targetPick[1];
 
   const send = () => {
     if (same) return;
     setError(null);
     startTransition(async () => {
-      const res = await createChallenge(ctx.matchId, ctx.targetUid, [h, a]);
+      const res = await createChallenge(ctx.matchId, ctx.targetUid);
       if (res.ok) {
         setToast("Izazov poslan ⚡");
         setTimeout(() => {
@@ -74,7 +74,7 @@ export default function ChallengeSetupClient({ ctx }: { ctx: Ctx }) {
               cursor: same || pending ? "default" : "pointer",
             }}
           >
-            {pending ? "Šaljem…" : <><Icon.bolt s={16} /> Pošalji {h}:{a}</>}
+            {pending ? "Šaljem…" : <><Icon.bolt s={16} /> Pošalji {ctx.myPick[0]}:{ctx.myPick[1]}</>}
           </button>
         }
       />
@@ -95,18 +95,28 @@ export default function ChallengeSetupClient({ ctx }: { ctx: Ctx }) {
           </div>
         </div>
 
+        {/* my tip — fixed: the duel is played with the tip I already submitted */}
         <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 13, color: C.muted, letterSpacing: 0.5, textAlign: "center", marginBottom: 12 }}>
-          TVOJ REZULTAT
+          TVOJ PREDANI TIP
         </div>
-        <div style={{ background: C.surface, borderRadius: 20, padding: "22px 14px", display: "flex", alignItems: "center", gap: 6, boxShadow: "0 1px 3px rgba(14,17,22,.05)" }}>
-          <Mini code={ctx.home} val={h} set={setH} />
-          <div style={{ fontFamily: FONT.anton, fontSize: 28, color: "#D7DAE0", alignSelf: "center", paddingBottom: 24 }}>:</div>
-          <Mini code={ctx.away} val={a} set={setA} />
+        <div style={{ background: C.surface, borderRadius: 20, padding: "22px 14px", display: "flex", alignItems: "center", justifyContent: "center", gap: 18, boxShadow: "0 1px 3px rgba(14,17,22,.05)" }}>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ display: "inline-flex" }}><TeamBadge code={ctx.home} size={42} /></div>
+            <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 12.5, color: C.ink, marginTop: 6 }}>{teamName(ctx.home)}</div>
+          </div>
+          <Score a={ctx.myPick[0]} b={ctx.myPick[1]} big tone="ink" />
+          <div style={{ textAlign: "center" }}>
+            <div style={{ display: "inline-flex" }}><TeamBadge code={ctx.away} size={42} /></div>
+            <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 12.5, color: C.ink, marginTop: 6 }}>{teamName(ctx.away)}</div>
+          </div>
+        </div>
+        <div style={{ marginTop: 10, textAlign: "center", fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12, color: C.muted }}>
+          Izazov se igra tipom koji si već predao — tip se ne može mijenjati.
         </div>
 
         {same && (
           <div style={{ marginTop: 12, background: C.redChipBg, borderRadius: 12, padding: "10px 14px", fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12.5, color: C.redChipFg, textAlign: "center" }}>
-            Ne možeš igrati isti rezultat kao protivnik.
+            Imate isti tip — takav izazov nije moguć.
           </div>
         )}
 
@@ -136,41 +146,6 @@ export default function ChallengeSetupClient({ ctx }: { ctx: Ctx }) {
       )}
     </main>
   );
-}
-
-function Mini({ code, val, set }: { code: string; val: number; set: (n: number) => void }) {
-  return (
-    <div style={{ flex: 1, textAlign: "center" }}>
-      <div style={{ display: "inline-flex" }}>
-        <TeamBadge code={code} size={42} />
-      </div>
-      <div style={{ fontFamily: FONT.anton, fontSize: 46, color: C.ink, lineHeight: 1, margin: "8px 0" }}>{val}</div>
-      <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
-        <button onClick={() => set(Math.max(0, val - 1))} style={miniBtn(false)}>
-          <Icon.minus s={16} />
-        </button>
-        <button onClick={() => set(Math.min(12, val + 1))} style={miniBtn(true)}>
-          <Icon.plus s={16} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function miniBtn(primary: boolean) {
-  return {
-    width: 42,
-    height: 42,
-    borderRadius: 13,
-    border: "none",
-    cursor: "pointer",
-    background: primary ? C.red : "#fff",
-    color: primary ? "#fff" : C.ink,
-    boxShadow: primary ? "0 4px 12px rgba(228,0,43,.28)" : "inset 0 0 0 1.5px #E2E5EA",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  } as const;
 }
 
 function PayoutRow({ good, label, val }: { good?: boolean; label: string; val: string }) {
