@@ -16,7 +16,9 @@ function validScore(n: number): boolean {
   return Number.isInteger(n) && n >= 0 && n <= 12;
 }
 
-/** Submit / update the current user's prediction for a match (before kickoff only). */
+/** Submit the current user's prediction for a match (before kickoff only).
+ *  One-shot: submitting reveals the rest of the team's tips, so the tip is
+ *  final — it can never be edited afterwards. */
 export async function submitPrediction(matchId: string, pick: Scoreline): Promise<ActionResult> {
   const { uid } = await requireUser();
 
@@ -28,6 +30,13 @@ export async function submitPrediction(matchId: string, pick: Scoreline): Promis
   if (!match) return { ok: false, error: "Utakmica ne postoji." };
   if (match.status !== "upcoming" || Date.now() >= match.kickoff) {
     return { ok: false, error: "Utakmica je zaključana — tip se više ne može mijenjati." };
+  }
+  const existing = await adminDb
+    .collection(COLLECTIONS.predictions)
+    .doc(predictionId(matchId, uid))
+    .get();
+  if (existing.exists) {
+    return { ok: false, error: "Tip je već predan — nakon predaje se ne može mijenjati." };
   }
 
   const doc: PredictionDoc = {

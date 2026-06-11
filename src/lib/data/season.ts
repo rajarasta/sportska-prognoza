@@ -63,7 +63,37 @@ export function ddmmyyyyToIso(s: string): string {
 }
 
 /** Kickoff epoch (ms) for a fixture, interpreting the local time as Europe/Zagreb
- *  (CEST = UTC+2 in June). */
+ *  (CEST = UTC+2 in June). A `+1` suffix ("04:00+1") means the match kicks off in
+ *  the night AFTER its matchday — North American evening slots land past midnight
+ *  here, so the matchday and the Zagreb calendar day differ. */
 export function kickoffMs(iso: string, time: string): number {
-  return Date.parse(`${iso}T${time}:00+02:00`);
+  const plus = time.endsWith("+1");
+  const hhmm = plus ? time.slice(0, -2) : time;
+  const base = Date.parse(`${iso}T${hhmm}:00+02:00`);
+  return plus ? base + 86400000 : base;
+}
+
+/** Strip the `+1` day-marker from a schedule time → the clock time to store/show. */
+export function clockTime(time: string): string {
+  return time.endsWith("+1") ? time.slice(0, -2) : time;
+}
+
+/** Zagreb-local calendar date (ISO) + clock time for an epoch ms. */
+export function zagrebParts(ms: number): { iso: string; hhmm: string } {
+  const d = new Date(ms);
+  const iso = d.toLocaleDateString("en-CA", { timeZone: "Europe/Zagreb" });
+  const hhmm = d.toLocaleTimeString("hr-HR", {
+    timeZone: "Europe/Zagreb",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return { iso, hhmm };
+}
+
+/** Kickoff display label vs the matchday: "21:00" when same-day, or
+ *  "04:00 (12. lip)" when the match starts past midnight Zagreb time. */
+export function kickoffLabel(matchdayIso: string, kickoff: number): string {
+  const { iso, hhmm } = zagrebParts(kickoff);
+  return iso === matchdayIso ? hhmm : `${hhmm} (${croShort(iso)})`;
 }

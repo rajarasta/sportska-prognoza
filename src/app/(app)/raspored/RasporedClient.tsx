@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Score, Tag, TeamBadge, teamName, matchTag } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
-import { MONTHS_FULL, WD_SHORT_MON, croShort, dayHeading, weekOf } from "@/lib/data/season";
+import { MONTHS_FULL, WD_SHORT_MON, croShort, dayHeading, kickoffLabel, weekOf } from "@/lib/data/season";
+import Countdown from "@/components/Countdown";
 import type { MatchView } from "@/lib/server/queries";
 import type { WeekDef } from "@/lib/types";
 
@@ -56,8 +57,8 @@ export default function RasporedClient({
   const main = mode === "dani" ? dayHeading(selDay, today) : `Tjedan ${selWeek}`;
   const sub =
     mode === "dani"
-      ? `${croShort(selDay)} · ${shown.length} utakmica`
-      : (weekDef?.range ?? "");
+      ? `${croShort(selDay)} · ${shown.length} utakmica · termini po HR vremenu`
+      : `${weekDef?.range ?? ""} · termini po HR vremenu`;
 
   const pickDay = (iso: string) => {
     setSelDay(iso);
@@ -245,10 +246,19 @@ function MatchCard({ m, nowMs }: { m: MatchView; nowMs: number }) {
         color: "inherit",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12 }}>
         <Tag tone={m.friendly ? "gold" : "gray"}>{matchTag(m)}</Tag>
-        <span style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12, color: C.muted }}>
-          {done ? <Tag tone="green">ZAVRŠENO</Tag> : <><Icon.clock s={13} />{m.time}</>}
+        <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12, color: C.muted }}>
+            {done ? <Tag tone="green">ZAVRŠENO</Tag> : <><Icon.clock s={13} />{kickoffLabel(m.date, m.kickoff)}</>}
+          </span>
+          {!locked && (
+            <Countdown
+              kickoff={m.kickoff}
+              prefix="za"
+              style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 11, color: C.red }}
+            />
+          )}
         </span>
       </div>
 
@@ -284,8 +294,8 @@ function MatchCard({ m, nowMs }: { m: MatchView; nowMs: number }) {
               ✓ {locked ? "Tip zaključan" : "Tip predan"}
             </span>
             {!locked && (
-              <span style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: FONT.archivo, fontWeight: 800, fontSize: 12.5, color: C.red }}>
-                Uredi <Icon.chev s={14} />
+              <span style={{ display: "flex", alignItems: "center", gap: 4, fontFamily: FONT.archivo, fontWeight: 800, fontSize: 12.5, color: C.gold }}>
+                ⚡ Izazovi <Icon.chev s={14} />
               </span>
             )}
           </>

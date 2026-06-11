@@ -9,6 +9,7 @@ import {
   getMyPick,
   getUsersMap,
 } from "@/lib/server/queries";
+import { kickoffLabel } from "@/lib/data/season";
 import type { DuelDoc, LeagueConfigDoc, MatchDoc, PredictionDoc, Scoreline } from "@/lib/types";
 
 export const DEFAULT_TOKENS_PER_WEEK = 3;
@@ -105,7 +106,7 @@ export async function getIzazoviData(uid: string): Promise<IzazoviData> {
       matchId: d.matchId,
       home: m?.home ?? "?",
       away: m?.away ?? "?",
-      time: m?.time ?? "",
+      time: m ? kickoffLabel(m.date, m.kickoff) : "",
       stake: d.stake,
       status: d.status,
       iChallenged,
@@ -144,11 +145,13 @@ export async function getIzazoviData(uid: string): Promise<IzazoviData> {
   for (const m of matches) {
     if (m.status !== "upcoming" || m.kickoff <= now) continue;
     const preds = byMatch.get(m.id) ?? [];
-    const iTipped = preds.some((p) => p.uid === uid);
-    if (!iTipped) continue;
+    const myPred = preds.find((p) => p.uid === uid);
+    if (!myPred) continue;
     for (const p of preds) {
       if (p.uid === uid) continue;
       if (dueledKey.has(`${m.id}_${p.uid}`)) continue;
+      // The duel is played with my submitted tip — an identical tip can't duel.
+      if (p.pick[0] === myPred.pick[0] && p.pick[1] === myPred.pick[1]) continue;
       const u = usersMap.get(p.uid);
       targets.push({
         matchId: m.id,
@@ -156,7 +159,7 @@ export async function getIzazoviData(uid: string): Promise<IzazoviData> {
         home: m.home,
         away: m.away,
         group: m.group,
-        time: m.time,
+        time: kickoffLabel(m.date, m.kickoff),
         targetUid: p.uid,
         targetName: u?.name ?? "Igrač",
         targetInit: u?.init ?? "?",
@@ -181,6 +184,7 @@ export async function getIzazoviData(uid: string): Promise<IzazoviData> {
 
 export interface ChallengeContext {
   match: MatchDoc;
+  myPick: Scoreline;
   targetUid: string;
   targetName: string;
   targetInit: string;
@@ -202,8 +206,9 @@ export async function getChallengeContext(
     getMyPick(uid, matchId),
   ]);
   if (!match || !targetPredSnap.exists || targetUid === uid) return null;
-  // Peek-prevention: only reveal the opponent's pick once I've tipped (or final).
-  if (match.status !== "final" && !myPick) return null;
+  // Peek-prevention + duel rule: the challenge is played with my submitted tip,
+  // so without a tip there is no challenge (and no peeking) at all.
+  if (!myPick) return null;
 
   const targetPred = targetPredSnap.data() as PredictionDoc;
   const tokensRemaining = await getTokenRemaining(uid, match.week, tokensForWeek(cfg, match.week));
@@ -211,6 +216,7 @@ export async function getChallengeContext(
 
   return {
     match,
+    myPick: myPick.pick,
     targetUid,
     targetName: u?.name ?? "Igrač",
     targetInit: u?.init ?? "?",

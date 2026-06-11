@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { NAME_TO_CODE, teamDocs } from "../src/lib/data/teams";
-import { weekOf, ddmmyyyyToIso, kickoffMs, WEEKS, SEASON } from "../src/lib/data/season";
+import { weekOf, ddmmyyyyToIso, kickoffMs, clockTime, WEEKS, SEASON } from "../src/lib/data/season";
 import { FRIENDLY_MATCHES } from "../src/lib/data/test-run";
 import { COLLECTIONS, CONFIG_DOC_ID } from "../src/lib/collections";
 import type { LeagueConfigDoc, MatchDoc, Scoreline } from "../src/lib/types";
@@ -14,11 +14,9 @@ import type { LeagueConfigDoc, MatchDoc, Scoreline } from "../src/lib/types";
 const app = getApps().length ? getApps()[0] : initializeApp(); // ADC
 const db = getFirestore(app);
 
-// Kickoff time slots assigned per match index within a day (placeholders the
-// admin can refine — the schedule file carries no kickoff times).
-const SLOTS = ["13:00", "15:00", "17:00", "18:00", "20:00", "21:00"];
-
-const LINE_RE = /^(\d+)\s+(\d{2}\.\d{2}\.\d{4})\s+([A-L])\s+(.+?)\s+–\s+(.+?)\s*$/;
+// Schedule line: no, matchday, kickoff "HH:MM" in Zagreb time (a "+1" suffix =
+// kicks off past midnight, the day after the matchday), group, home – away.
+const LINE_RE = /^(\d+)\s+(\d{2}\.\d{2}\.\d{4})\s+(\d{2}:\d{2}(?:\+1)?)\s+([A-L])\s+(.+?)\s+–\s+(.+?)\s*$/;
 
 function parseSchedule(): MatchDoc[] {
   const file = join(process.cwd(), "data", "grupna-faza.txt");
@@ -29,16 +27,13 @@ function parseSchedule(): MatchDoc[] {
     .map((line) => {
       const m = LINE_RE.exec(line);
       if (!m) throw new Error(`Cannot parse schedule line: "${line}"`);
-      const [, no, date, group, homeName, awayName] = m;
-      return { no: Number(no), iso: ddmmyyyyToIso(date), group, homeName: homeName.trim(), awayName: awayName.trim() };
+      const [, no, date, time, group, homeName, awayName] = m;
+      return { no: Number(no), iso: ddmmyyyyToIso(date), time, group, homeName: homeName.trim(), awayName: awayName.trim() };
     })
     .sort((a, b) => a.no - b.no);
 
-  const perDay: Record<string, number> = {};
   return rows.map((r) => {
-    const idx = perDay[r.iso] ?? 0;
-    perDay[r.iso] = idx + 1;
-    const time = SLOTS[Math.min(idx, SLOTS.length - 1)];
+    const time = r.time;
     const home = NAME_TO_CODE[r.homeName];
     const away = NAME_TO_CODE[r.awayName];
     if (!home) throw new Error(`Unknown team name "${r.homeName}" (match ${r.no})`);
@@ -48,7 +43,7 @@ function parseSchedule(): MatchDoc[] {
       no: r.no,
       group: r.group,
       date: r.iso,
-      time,
+      time: clockTime(time),
       kickoff: kickoffMs(r.iso, time),
       week: weekOf(r.iso),
       home,

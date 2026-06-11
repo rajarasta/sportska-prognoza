@@ -6,8 +6,9 @@ import OverlayHeader from "@/components/OverlayHeader";
 import { TeamBadge, teamName, matchTag } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { C, FONT, SAFE } from "@/lib/tokens";
-import { dayHeading } from "@/lib/data/season";
+import { dayHeading, kickoffLabel } from "@/lib/data/season";
 import { submitPrediction } from "@/app/actions/predictions";
+import Countdown from "@/components/Countdown";
 import type { Scoreline } from "@/lib/types";
 
 interface MatchLite {
@@ -18,6 +19,7 @@ interface MatchLite {
   away: string;
   date: string;
   time: string;
+  kickoff: number;
 }
 
 export default function TipEntryClient({
@@ -41,7 +43,7 @@ export default function TipEntryClient({
     startTransition(async () => {
       const res = await submitPrediction(match.id, [h, a]);
       if (res.ok) {
-        setToast(`Tip ${h}:${a} spremljen ✓`);
+        setToast(`Tip ${h}:${a} predan ✓`);
         setTimeout(() => {
           router.push(`/match/${match.id}`);
           router.refresh();
@@ -79,14 +81,18 @@ export default function TipEntryClient({
               boxShadow: pending ? "none" : "0 6px 14px rgba(228,0,43,.32)",
             }}
           >
-            {pending ? "Spremam…" : <><Icon.check s={16} /> Spremi {h}:{a}</>}
+            {pending ? "Predajem…" : <><Icon.check s={16} /> Predaj {h}:{a}</>}
           </button>
         }
       />
 
       <div style={{ padding: "8px 20px 0" }}>
         <div style={{ textAlign: "center", fontFamily: FONT.archivo, fontWeight: 700, fontSize: 13, color: C.muted, marginBottom: 18 }}>
-          {matchTag(match)} · {dayHeading(match.date, today)} · {match.time}
+          {matchTag(match)} · {dayHeading(match.date, today)} · {kickoffLabel(match.date, match.kickoff)} po HR vremenu
+          <Countdown
+            kickoff={match.kickoff}
+            style={{ display: "block", marginTop: 4, fontSize: 12, color: C.red }}
+          />
         </div>
 
         <div style={{ background: C.surface, borderRadius: 22, padding: "26px 16px", display: "flex", alignItems: "flex-start", gap: 8, boxShadow: "0 1px 3px rgba(14,17,22,.05)" }}>
@@ -99,6 +105,13 @@ export default function TipEntryClient({
           <div style={{ fontSize: 26 }}>🎯</div>
           <div style={{ flex: 1, fontFamily: FONT.archivo, fontWeight: 700, fontSize: 13, color: C.goldText, lineHeight: 1.4 }}>
             Pun pogodak <b>{h}:{a}</b> nosi <b>3 boda</b>. Promašaj nosi 0–1 bod po Gaussovoj + 0,3 za točan broj golova ekipe.
+          </div>
+        </div>
+
+        <div style={{ marginTop: 12, background: C.surface, borderRadius: 18, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14, boxShadow: "0 1px 3px rgba(14,17,22,.05)" }}>
+          <div style={{ fontSize: 22 }}>🔒</div>
+          <div style={{ flex: 1, fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12.5, color: C.muted, lineHeight: 1.4 }}>
+            Tip je <b>konačan</b> — nakon predaje se ne može mijenjati, a otkrivaju ti se tipovi ekipe (i možeš ih izazvati).
           </div>
         </div>
 
