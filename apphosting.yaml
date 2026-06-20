@@ -37,7 +37,7 @@ env:
     value: "__session"
     availability: [RUNTIME]
   - variable: LEAGUE_ADMIN_EMAILS
-    value: "rastocic.josip@gmail.com"
+    value: "rastocic.josip@gmail.com,aobrvan@gmail.com"
     availability: [RUNTIME]
 
   # ── Results crawler (/api/cron/crawl-results + `npm run crawl`) ──
