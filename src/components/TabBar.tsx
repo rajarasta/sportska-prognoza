@@ -54,7 +54,9 @@ export default function TabBar() {
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
         borderTop: `1px solid ${C.hairline}`,
-        padding: "10px 14px 30px",
+        // Floor at today's 30px; add the home-indicator inset on top in standalone.
+        // On non-notch devices env() resolves to 0, so max() preserves the 30px baseline.
+        padding: "10px 14px max(30px, calc(14px + env(safe-area-inset-bottom)))",
         display: "flex",
         alignItems: "flex-start",
       }}
