@@ -12,6 +12,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "optimize:images": "node scripts/optimize-images.mjs",
+    "icons": "node scripts/generate-icons.mjs",
     "seed": "tsx scripts/seed.ts",
     "crawl": "tsx scripts/crawl-results.ts",
     "recompute": "tsx scripts/recompute.ts",
