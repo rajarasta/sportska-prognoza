@@ -231,6 +231,102 @@ export async function getMyHistory(uid: string): Promise<HistoryRow[]> {
   return rows.reverse();
 }
 
+// ── Player profile (another player's predictions) ──
+export interface PlayerMatchRow {
+  matchId: string;
+  week: number;
+  group: string;
+  friendly: boolean;
+  home: string;
+  away: string;
+  date: string;
+  kickoff: number;
+  status: MatchDoc["status"];
+  res: Scoreline | null;
+  revealed: boolean; // peek-prevention: can the viewer see this player's pick?
+  locked: boolean; // kicked off / final
+  pick: Scoreline | null; // only when revealed
+  earned: number | null; // duel-adjusted points, only once final
+  exact: boolean | null;
+}
+
+export interface PlayerProfileData {
+  uid: string;
+  name: string;
+  init: string;
+  color: string;
+  you: boolean;
+  rank: number;
+  totalPoints: number;
+  exactCount: number;
+  duelsWon: number;
+  rows: PlayerMatchRow[]; // chronological
+}
+
+/**
+ * Another player's predictions across all matches, with the same peek-prevention
+ * as getMatchDetail: a pick is only revealed if the match is final, the viewer has
+ * already tipped that match, or it's the viewer's own profile.
+ */
+export async function getPlayerProfile(
+  targetUid: string,
+  viewerUid: string,
+): Promise<PlayerProfileData | null> {
+  const [users, matches, targetPreds, viewerPreds] = await Promise.all([
+    getAllUsers(),
+    getAllMatches(),
+    getMyPredictions(targetUid),
+    getMyPredictions(viewerUid),
+  ]);
+  const target = users.find((u) => u.uid === targetUid);
+  if (!target) return null;
+
+  // Rank with the same tie-breaking as the leaderboard.
+  const sorted = [...users].sort(
+    (a, b) => b.totalPoints - a.totalPoints || b.exactCount - a.exactCount,
+  );
+  const rank = sorted.findIndex((u) => u.uid === targetUid) + 1;
+
+  const now = Date.now();
+  const own = targetUid === viewerUid;
+  const rows: PlayerMatchRow[] = matches.map((m) => {
+    const isFinal = m.status === "final" && Boolean(m.res);
+    const revealed = isFinal || own || viewerPreds.has(m.id);
+    const p = targetPreds.get(m.id);
+    return {
+      matchId: m.id,
+      week: m.week,
+      group: m.group,
+      friendly: Boolean(m.friendly),
+      home: m.home,
+      away: m.away,
+      date: m.date,
+      kickoff: m.kickoff,
+      status: m.status,
+      res: m.res ?? null,
+      revealed,
+      locked: isLocked(m, now),
+      pick: revealed ? p?.pick ?? null : null,
+      earned: isFinal && p ? p.effectivePoints ?? p.points ?? 0 : null,
+      exact: p?.exact ?? null,
+    };
+  });
+  rows.sort((a, b) => a.kickoff - b.kickoff);
+
+  return {
+    uid: target.uid,
+    name: target.name,
+    init: target.init,
+    color: target.color,
+    you: own,
+    rank,
+    totalPoints: target.totalPoints,
+    exactCount: target.exactCount,
+    duelsWon: target.duelsWon ?? 0,
+    rows,
+  };
+}
+
 // ── Allowlist (admin) ──
 export interface AllowlistEntry {
   email: string;

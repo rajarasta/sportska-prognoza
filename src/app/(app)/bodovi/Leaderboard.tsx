@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Avatar, SectionTitle, Tag } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
@@ -86,8 +87,9 @@ export default function Leaderboard({
             const rank = (hasPodium ? 4 : 1) + i;
             const mv = p.move;
             return (
-              <div
+              <Link
                 key={p.uid}
+                href={`/igrac/${p.uid}`}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -95,6 +97,8 @@ export default function Leaderboard({
                   padding: "12px 16px",
                   borderTop: i ? "1px solid #F1F2F5" : "none",
                   background: p.you ? C.redTintBg : "#fff",
+                  color: "inherit",
+                  textDecoration: "none",
                 }}
               >
                 <div style={{ width: 22, fontFamily: FONT.anton, fontSize: 18, color: C.faint, textAlign: "center" }}>{rank}</div>
@@ -114,7 +118,7 @@ export default function Leaderboard({
                   <div style={{ fontFamily: FONT.anton, fontSize: 21, color: C.ink, lineHeight: 1 }}>{pointsOf(p).toFixed(1)}</div>
                   <div style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 11, color: C.muted }}>{p.exact}× 🎯</div>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>
@@ -136,7 +140,11 @@ function Podium({ top3, pointsOf }: { top3: Standing[]; pointsOf: (s: Standing) 
         const m = meta[i];
         const mine = p.you;
         return (
-          <div key={p.uid} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <Link
+            key={p.uid}
+            href={`/igrac/${p.uid}`}
+            style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", color: "inherit", textDecoration: "none" }}
+          >
             <Avatar p={p} size={m.size} ring={m.ring} />
             <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 14, marginTop: 8, color: C.ink, display: "flex", alignItems: "center", gap: 4 }}>
               {p.name}
@@ -163,7 +171,7 @@ function Podium({ top3, pointsOf }: { top3: Standing[]; pointsOf: (s: Standing) 
             >
               {m.medal}
             </div>
-          </div>
+          </Link>
         );
       })}
     </div>
