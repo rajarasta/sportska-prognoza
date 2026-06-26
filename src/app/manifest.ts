@@ -20,10 +20,11 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#0E1116",
     theme_color: "#0E1116",
     lang: "hr",
+    // PNG-only, exactly the structure that was installable before. Android Chrome
+    // does NOT reliably support an SVG manifest icon, and listing one (sizes:"any")
+    // can win icon selection and then fail to rasterize, breaking installability —
+    // so the SVG mark stays a favicon (layout metadata) and is kept OUT of here.
     icons: [
-      // Scalable mark first (crisp at any launcher size); PNG variants follow so
-      // Chrome's install criteria (a 192px and a 512px PNG) are satisfied.
-      { src: "/icons/icon.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
       {
