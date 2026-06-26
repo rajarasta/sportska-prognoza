@@ -3,6 +3,7 @@ import type { DecodedIdToken } from "firebase-admin/auth";
 import { adminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS } from "@/lib/collections";
 import { initialsFrom, colorFor } from "@/lib/avatar";
+import { applyNickname } from "@/lib/data/nicknames";
 import { isAdminEmail } from "./allowlist";
 import type { UserDoc } from "@/lib/types";
 
@@ -49,5 +50,5 @@ export async function provisionUser(decoded: DecodedIdToken): Promise<UserDoc> {
 
 export async function getUser(uid: string): Promise<UserDoc | null> {
   const snap = await adminDb.collection(COLLECTIONS.users).doc(uid).get();
-  return snap.exists ? (snap.data() as UserDoc) : null;
+  return snap.exists ? applyNickname(snap.data() as UserDoc) : null;
 }
