@@ -25,12 +25,11 @@ export const metadata: Metadata = {
     "Liga prognoza za Svjetsko prvenstvo 2026. Tipuj rezultate, skupljaj bodove, izazivaj ekipu.",
   applicationName: "Fantasy Liga",
   appleWebApp: { capable: true, title: "Fantasy Liga", statusBarStyle: "default" },
-  // Custom app mark (black line art, transparent). The SVG is the crisp favicon;
-  // the manifest (src/app/manifest.ts) carries the PNG + maskable variants for PWA
-  // install, and the Apple touch icon below covers the iOS home screen.
+  // Favicon + Apple touch icon point at the same Next icon route as the manifest
+  // (see src/app/appicon-*), because /public files 404 on Firebase App Hosting.
   icons: {
-    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    icon: [{ url: "/appicon-512", type: "image/png" }],
+    apple: [{ url: "/appicon-512", type: "image/png" }],
   },
 };
 

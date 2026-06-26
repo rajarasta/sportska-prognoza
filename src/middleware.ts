@@ -48,6 +48,6 @@ export const config = {
   // match on specific extensions (not "any dot") so dynamic route segments that
   // could contain a dot still get gated.
   matcher: [
-    "/((?!_next|api/login|api/logout|.*\\.(?:ico|png|jpg|jpeg|svg|gif|webp|avif|js|css|txt|xml|json|woff2?|map|webmanifest)$).*)",
+    "/((?!_next|api/login|api/logout|appicon-|.*\\.(?:ico|png|jpg|jpeg|svg|gif|webp|avif|js|css|txt|xml|json|woff2?|map|webmanifest)$).*)",
   ],
 };

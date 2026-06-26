@@ -20,19 +20,15 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#0E1116",
     theme_color: "#0E1116",
     lang: "hr",
-    // PNG-only, exactly the structure that was installable before. Android Chrome
-    // does NOT reliably support an SVG manifest icon, and listing one (sizes:"any")
-    // can win icon selection and then fail to rasterize, breaking installability —
-    // so the SVG mark stays a favicon (layout metadata) and is kept OUT of here.
+    // Icons are served by Next ROUTE handlers (src/app/appicon-*), NOT from
+    // /public — Firebase App Hosting does not serve /public files at runtime, so
+    // /icons/*.png 404 in production and Chrome then refuses to install. These
+    // /appicon-* routes are excluded from the auth middleware so they return the
+    // PNG (200) to anonymous icon fetches.
     icons: [
-      { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
-      {
-        src: "/icons/icon-maskable-512.png",
-        sizes: "512x512",
-        type: "image/png",
-        purpose: "maskable",
-      },
+      { src: "/appicon-192", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/appicon-512", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/appicon-maskable", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
   };
 }
