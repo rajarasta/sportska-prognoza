@@ -1,38 +1,48 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { imageSources, imageFallback, pickRandom, type PoolImage } from "@/lib/data/loginImages";
+import { imageSources, imageFallback, type PoolImage } from "@/lib/data/loginImages";
 import { C, FONT } from "@/lib/tokens";
 
-// Full-screen "slika dana" shown once per app launch, then fades to reveal the
-// app. Gated by sessionStorage so it does NOT reappear when navigating back from
-// full-screen flows (match detail, /unos…) within the same session.
+// Full-screen "slika dana". The image is chosen on the SERVER and rendered into
+// the initial HTML, so it is the very first thing painted — handing straight off
+// from the OS launch splash instead of flashing in late after hydration. JS then
+// holds it briefly and fades it out. Gated by sessionStorage so it only acts as a
+// splash once per launch, not on every navigation back into the app.
 const SESSION_KEY = "fl_splash_shown";
-const HOLD_MS = 1500; // fully visible before the fade starts
+const HOLD_MS = 1600; // fully visible before the fade starts
 const FADE_MS = 550; // fade-out duration
 
-export default function SplashScreen({ images }: { images: PoolImage[] }) {
-  const [img, setImg] = useState<PoolImage | null>(null);
+export default function SplashScreen({ image }: { image: PoolImage | null }) {
+  // Render by default (server + first client paint). `gone` lazily reads
+  // sessionStorage on the client so that re-mounts within the same session
+  // (e.g. returning from match detail) don't flash the splash again.
+  const [gone, setGone] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false; // SSR: always paint it
+    try {
+      return Boolean(sessionStorage.getItem(SESSION_KEY));
+    } catch {
+      return false;
+    }
+  });
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
-    if (images.length === 0) return;
+    if (!image || gone) return;
     try {
-      if (sessionStorage.getItem(SESSION_KEY)) return;
       sessionStorage.setItem(SESSION_KEY, "1");
     } catch {
-      // sessionStorage may be unavailable (private mode) — fall through and show.
+      // sessionStorage unavailable (private mode) — show this once regardless.
     }
-    setImg(pickRandom(images));
     const t1 = setTimeout(() => setLeaving(true), HOLD_MS);
-    const t2 = setTimeout(() => setImg(null), HOLD_MS + FADE_MS);
+    const t2 = setTimeout(() => setGone(true), HOLD_MS + FADE_MS);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [images]);
+  }, [image, gone]);
 
-  if (!img) return null;
+  if (!image || gone) return null;
 
   return (
     <div
@@ -42,18 +52,18 @@ export default function SplashScreen({ images }: { images: PoolImage[] }) {
         position: "fixed",
         inset: 0,
         zIndex: 2000,
-        background: C.ink,
+        background: C.ink, // matches the manifest background_color → seamless handoff
         opacity: leaving ? 0 : 1,
         transition: `opacity ${FADE_MS}ms ease`,
         pointerEvents: leaving ? "none" : "auto",
       }}
     >
       <picture>
-        {imageSources(img).map((s) => (
+        {imageSources(image).map((s) => (
           <source key={s.src} srcSet={s.src} type={s.type} />
         ))}
         <img
-          src={imageFallback(img)}
+          src={imageFallback(image)}
           alt=""
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
         />
