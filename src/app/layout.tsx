@@ -24,11 +24,11 @@ export const metadata: Metadata = {
     "Liga prognoza za Svjetsko prvenstvo 2026. Tipuj rezultate, skupljaj bodove, izazivaj ekipu.",
   applicationName: "Fantasy Liga",
   appleWebApp: { capable: true, title: "Fantasy Liga", statusBarStyle: "default" },
-  // Only the Apple touch icon goes through metadata. We deliberately do NOT declare
-  // `icons.icon` for the 192/512 PNGs: Next would emit <link rel="icon"> tags that
-  // browsers may prefer over the existing favicon.ico. The web manifest
-  // (src/app/manifest.ts) carries the 192/512/maskable icons for PWA install.
+  // Custom app mark (black line art, transparent). The SVG is the crisp favicon;
+  // the manifest (src/app/manifest.ts) carries the PNG + maskable variants for PWA
+  // install, and the Apple touch icon below covers the iOS home screen.
   icons: {
+    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };

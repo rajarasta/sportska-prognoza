@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LOGIN_IMAGES } from "@/lib/data/loginImages";
+import { imageSources, imageFallback, pickRandom, type PoolImage } from "@/lib/data/loginImages";
 import { C, FONT } from "@/lib/tokens";
 
 // Full-screen "slika dana" shown once per app launch, then fades to reveal the
@@ -11,25 +11,26 @@ const SESSION_KEY = "fl_splash_shown";
 const HOLD_MS = 1500; // fully visible before the fade starts
 const FADE_MS = 550; // fade-out duration
 
-export default function SplashScreen() {
-  const [img, setImg] = useState<string | null>(null);
+export default function SplashScreen({ images }: { images: PoolImage[] }) {
+  const [img, setImg] = useState<PoolImage | null>(null);
   const [leaving, setLeaving] = useState(false);
 
   useEffect(() => {
+    if (images.length === 0) return;
     try {
       if (sessionStorage.getItem(SESSION_KEY)) return;
       sessionStorage.setItem(SESSION_KEY, "1");
     } catch {
       // sessionStorage may be unavailable (private mode) — fall through and show.
     }
-    setImg(LOGIN_IMAGES[Math.floor(Math.random() * LOGIN_IMAGES.length)]);
+    setImg(pickRandom(images));
     const t1 = setTimeout(() => setLeaving(true), HOLD_MS);
     const t2 = setTimeout(() => setImg(null), HOLD_MS + FADE_MS);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, []);
+  }, [images]);
 
   if (!img) return null;
 
@@ -48,10 +49,11 @@ export default function SplashScreen() {
       }}
     >
       <picture>
-        <source srcSet={`/login/${img}.avif`} type="image/avif" />
-        <source srcSet={`/login/${img}.webp`} type="image/webp" />
+        {imageSources(img).map((s) => (
+          <source key={s.src} srcSet={s.src} type={s.type} />
+        ))}
         <img
-          src={`/login/${img}.webp`}
+          src={imageFallback(img)}
           alt=""
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
         />
