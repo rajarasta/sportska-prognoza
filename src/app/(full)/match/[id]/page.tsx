@@ -119,7 +119,7 @@ export default async function MatchDetailPage({
                     ? `Izazov izgubljen vs ${myDuel.opponentName}`
                     : `⚡ Izazov neriješen vs ${myDuel.opponentName}`}
               </span>
-              <span style={{ fontFamily: FONT.anton, fontSize: 22, color: myDuel.won ? C.green : C.ink }}>+{myDuel.points.toFixed(1)}</span>
+              <span style={{ fontFamily: FONT.anton, fontSize: 22, color: myDuel.won ? C.green : C.ink }}>+{myDuel.points.toFixed(2)}</span>
             </div>
           )}
 
@@ -134,7 +134,7 @@ export default async function MatchDetailPage({
               {brk.exact ? (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <span style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 14, color: C.green }}>🎯 Točan rezultat!</span>
-                  <span style={{ fontFamily: FONT.anton, fontSize: 22, color: C.green }}>+{brk.total.toFixed(1)}</span>
+                  <span style={{ fontFamily: FONT.anton, fontSize: 22, color: C.green }}>+{brk.total.toFixed(2)}</span>
                 </div>
               ) : (
                 <>

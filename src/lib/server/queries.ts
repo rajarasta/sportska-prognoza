@@ -2,6 +2,7 @@ import "server-only";
 import { adminDb } from "@/lib/firebase/admin";
 import { COLLECTIONS, CONFIG_DOC_ID, predictionId } from "@/lib/collections";
 import { scorePick, DEFAULT_SCORE_CONFIG, type ScoreConfig } from "@/lib/scoring";
+import { applyNickname } from "@/lib/data/nicknames";
 import type {
   DuelDoc,
   LeagueConfigDoc,
@@ -37,7 +38,7 @@ export interface Standing {
 
 export async function getAllUsers(): Promise<UserDoc[]> {
   const snap = await adminDb.collection(COLLECTIONS.users).get();
-  return snap.docs.map((d) => d.data() as UserDoc);
+  return snap.docs.map((d) => applyNickname(d.data() as UserDoc));
 }
 
 export async function getUsersMap(): Promise<Map<string, UserDoc>> {

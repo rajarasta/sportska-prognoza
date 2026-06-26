@@ -115,7 +115,7 @@ export default function Leaderboard({
                   </div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontFamily: FONT.anton, fontSize: 21, color: C.ink, lineHeight: 1 }}>{pointsOf(p).toFixed(1)}</div>
+                  <div style={{ fontFamily: FONT.anton, fontSize: 21, color: C.ink, lineHeight: 1 }}>{pointsOf(p).toFixed(2)}</div>
                   <div style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 11, color: C.muted }}>{p.exact}× 🎯</div>
                 </div>
               </Link>
@@ -150,7 +150,7 @@ function Podium({ top3, pointsOf }: { top3: Standing[]; pointsOf: (s: Standing) 
               {p.name}
               {mine && <span style={{ color: C.red, fontSize: 11 }}>● TI</span>}
             </div>
-            <div style={{ fontFamily: FONT.anton, fontSize: 22, color: C.ink, lineHeight: 1 }}>{pointsOf(p).toFixed(1)}</div>
+            <div style={{ fontFamily: FONT.anton, fontSize: 22, color: C.ink, lineHeight: 1 }}>{pointsOf(p).toFixed(2)}</div>
             <div
               style={{
                 marginTop: 8,

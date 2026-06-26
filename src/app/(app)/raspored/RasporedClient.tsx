@@ -286,7 +286,7 @@ function MatchCard({ m, nowMs }: { m: MatchView; nowMs: number }) {
             <span style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12.5, color: C.muted }}>
               {m.myPick ? `Tvoj tip ${m.myPick[0]}:${m.myPick[1]}` : "Nisi tipovao"}
             </span>
-            {m.myPick && <Tag tone={earnTone}>+{earned.toFixed(1)} bodova</Tag>}
+            {m.myPick && <Tag tone={earnTone}>+{earned.toFixed(2)} bodova</Tag>}
           </>
         ) : m.myPick ? (
           <>

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { getTokens, type Tokens } from "next-firebase-auth-edge";
 import { authConfig } from "@/lib/auth/config";
 import { getUser } from "./users";
+import { nickname } from "@/lib/data/nicknames";
 import type { UserDoc } from "@/lib/types";
 
 /** Verified session tokens for the current request, or null if signed out. */
@@ -35,7 +36,7 @@ export async function requireUser(): Promise<CurrentUser> {
   return {
     uid,
     email: (email ?? "").toLowerCase(),
-    name: name ?? profile?.name ?? "Igrač",
+    name: nickname(name ?? profile?.name ?? "Igrač"),
     picture: picture ?? null,
     profile,
   };
