@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Anton, Archivo } from "next/font/google";
 import "./globals.css";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 // Display font — big scores, screen titles. Single weight, condensed/impactful caps.
 const anton = Anton({
@@ -51,6 +52,7 @@ export default function RootLayout({
     <html lang="hr">
       <body className={`${anton.variable} ${archivo.variable}`}>
         <div className="app-shell">{children}</div>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
