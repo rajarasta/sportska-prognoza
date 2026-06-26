@@ -1,12 +1,13 @@
 import { C, FONT, R, SHADOW } from "@/lib/tokens";
-import { randomLoginImage } from "@/lib/data/loginImages";
+import { pickRandom, imageSources, imageFallback } from "@/lib/data/loginImages";
+import { availableLoginImages } from "@/lib/server/login-images";
 import LoginButton from "./LoginButton";
 
 // Rotating "image of the day" — chosen per request.
 export const dynamic = "force-dynamic";
 
 export default function LoginPage() {
-  const img = randomLoginImage();
+  const img = pickRandom(availableLoginImages());
 
   return (
     <main
@@ -63,15 +64,18 @@ export default function LoginPage() {
           background: C.ink,
         }}
       >
-        <picture>
-          <source srcSet={`/login/${img}.avif`} type="image/avif" />
-          <source srcSet={`/login/${img}.webp`} type="image/webp" />
-          <img
-            src={`/login/${img}.webp`}
-            alt="Slika dana"
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        </picture>
+        {img && (
+          <picture>
+            {imageSources(img).map((s) => (
+              <source key={s.src} srcSet={s.src} type={s.type} />
+            ))}
+            <img
+              src={imageFallback(img)}
+              alt="Slika dana"
+              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+            />
+          </picture>
+        )}
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(14,17,22,0) 45%, rgba(14,17,22,.72) 100%)" }} />
         <div style={{ position: "absolute", left: 14, bottom: 14 }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 5, background: "rgba(228,0,43,.92)", color: "#fff", borderRadius: 7, padding: "4px 9px", fontFamily: FONT.archivo, fontWeight: 700, fontSize: 11.5, letterSpacing: 0.3, textTransform: "uppercase" }}>
