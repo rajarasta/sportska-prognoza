@@ -53,7 +53,7 @@ export default async function PlayerProfilePage({
           </div>
         </div>
         <div style={{ display: "flex", gap: 10, marginTop: 18 }}>
-          <Stat value={data.totalPoints.toFixed(1)} label="Bodova" />
+          <Stat value={data.totalPoints.toFixed(2)} label="Bodova" />
           <Stat value={`${data.exactCount}`} label="Točnih 🎯" />
           <Stat value={`${data.duelsWon}`} label="Izazova ⚡" />
         </div>
@@ -119,7 +119,7 @@ function MatchRow({ r, first }: { r: PlayerMatchRow; first: boolean }) {
               r.friendly ? (
                 <Tag tone="gray">probna</Tag>
               ) : (
-                <Tag tone={earnTone}>{r.exact ? "🎯 " : ""}+{earned.toFixed(1)}</Tag>
+                <Tag tone={earnTone}>{r.exact ? "🎯 " : ""}+{earned.toFixed(2)}</Tag>
               )
             ) : (
               <Tag tone="gray">čeka</Tag>

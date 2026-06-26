@@ -47,7 +47,7 @@ export default async function ProfilPage() {
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginTop: 18 }}>
-          <div style={{ fontFamily: FONT.anton, fontSize: 44, color: "#fff", lineHeight: 1 }}>{points.toFixed(1)}</div>
+          <div style={{ fontFamily: FONT.anton, fontSize: 44, color: "#fff", lineHeight: 1 }}>{points.toFixed(2)}</div>
           <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 14, color: C.muted }}>bodova ukupno</div>
         </div>
       </div>
@@ -57,7 +57,7 @@ export default async function ProfilPage() {
         <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
           <Stat big={String(exact)} label="TOČNIH" tone={C.green} />
           <Stat big={`${won}–${lost}`} label="IZAZOVI W–L" tone={C.red} />
-          <Stat big={bestWeek.toFixed(1)} label="NAJBOLJI TJ." tone={C.ink} />
+          <Stat big={bestWeek.toFixed(2)} label="NAJBOLJI TJ." tone={C.ink} />
         </div>
 
         <SectionTitle>Značke</SectionTitle>
@@ -101,7 +101,7 @@ export default async function ProfilPage() {
                 <div style={{ flex: 1, textAlign: "right", fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12, color: C.muted }}>
                   tip {m.pick[0]}:{m.pick[1]}
                 </div>
-                <Tag tone={m.earned >= 3 ? "green" : m.earned >= 1 ? "gold" : "gray"}>+{m.earned.toFixed(1)}</Tag>
+                <Tag tone={m.earned >= 3 ? "green" : m.earned >= 1 ? "gold" : "gray"}>+{m.earned.toFixed(2)}</Tag>
               </div>
             ))
           )}
