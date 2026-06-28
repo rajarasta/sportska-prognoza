@@ -36,7 +36,8 @@ export async function createChallenge(matchId: string, targetUid: string): Promi
   if (!targetSnap.exists) return { ok: false, error: "Protivnik nema predani tip." };
 
   const pick = myPick.pick;
-  const targetPick = (targetSnap.data() as PredictionDoc).pick;
+  const targetPrediction = targetSnap.data() as PredictionDoc;
+  const targetPick = targetPrediction.pick;
   if (pick[0] === targetPick[0] && pick[1] === targetPick[1]) {
     return { ok: false, error: "Imate isti tip — takav izazov nije moguć." };
   }
@@ -73,7 +74,13 @@ export async function createChallenge(matchId: string, targetUid: string): Promi
         challengerUid: uid,
         opponentUid: targetUid,
         challengerPick: [pick[0], pick[1]],
+        challengerExtraTimePick: myPick.extraTimePick ?? null,
+        challengerPenaltyWinnerPick: myPick.penaltyWinnerPick ?? null,
+        challengerPenaltyPick: myPick.penaltyPick ?? null,
         opponentPick: targetPick,
+        opponentExtraTimePick: targetPrediction.extraTimePick ?? null,
+        opponentPenaltyWinnerPick: targetPrediction.penaltyWinnerPick ?? null,
+        opponentPenaltyPick: targetPrediction.penaltyPick ?? null,
         stake,
         status: "active",
         winnerUid: null,

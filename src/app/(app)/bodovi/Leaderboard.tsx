@@ -1,34 +1,36 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { Avatar, SectionTitle, Tag } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
+import { useScoringMode } from "@/components/ScoringModeProvider";
 import type { Standing } from "@/lib/server/queries";
-import type { WeekDef } from "@/lib/types";
 
 export default function Leaderboard({
   standings,
-  weeks,
 }: {
   standings: Standing[];
-  weeks: WeekDef[];
 }) {
-  const [view, setView] = useState<string>("total");
+  const { mode: scoringMode, setMode: setScoringMode } = useScoringMode();
 
-  const pointsOf = (s: Standing) => (view === "total" ? s.points : s.weeklyPoints[view] ?? 0);
+  const pointsOf = (s: Standing) => (scoringMode === "old" ? s.points : s.m2Points);
+  const moveOf = (s: Standing) => (scoringMode === "old" ? s.move : s.m2Move);
 
   const ranked = useMemo(() => {
     const arr = [...standings];
-    arr.sort((a, b) => pointsOf(b) - pointsOf(a) || b.exact - a.exact);
+    arr.sort(
+      (a, b) =>
+        (scoringMode === "old" ? b.points - a.points : b.m2Points - a.m2Points) ||
+        b.exact - a.exact,
+    );
     return arr;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [standings, view]);
+  }, [standings, scoringMode]);
 
   const options = [
-    { k: "total", label: "Ukupno" },
-    ...weeks.map((w) => ({ k: String(w.n), label: w.n === 0 ? "Test" : `T${w.n}` })),
+    { k: "old" as const, label: "Staro" },
+    { k: "m2" as const, label: "Novo M2" },
   ];
   const hasPodium = ranked.length >= 3;
   const top3 = ranked.slice(0, 3);
@@ -44,17 +46,19 @@ export default function Leaderboard({
             {options.map((o) => (
               <button
                 key={o.k}
-                onClick={() => setView(o.k)}
+                onClick={() => setScoringMode(o.k)}
+                aria-pressed={scoringMode === o.k}
                 style={{
                   border: "none",
                   cursor: "pointer",
                   padding: "7px 11px",
+                  minWidth: 82,
                   borderRadius: 8,
                   fontFamily: FONT.archivo,
                   fontWeight: 800,
                   fontSize: 13,
-                  background: view === o.k ? C.ink : "transparent",
-                  color: view === o.k ? "#fff" : C.muted2,
+                  background: scoringMode === o.k ? C.ink : "transparent",
+                  color: scoringMode === o.k ? "#fff" : C.muted2,
                 }}
               >
                 {o.label}
@@ -74,7 +78,7 @@ export default function Leaderboard({
 
       {/* list */}
       <div style={{ padding: "18px 16px 0" }}>
-        <SectionTitle right={<span style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12, color: C.muted }}>BODOVA · TOČNIH</span>}>
+        <SectionTitle right={<span style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12, color: C.muted }}>{scoringMode === "old" ? "BODOVA" : "M2 BODOVA"} · TOCNIH</span>}>
           Poredak
         </SectionTitle>
         <div style={{ background: C.surface, borderRadius: 20, overflow: "hidden", boxShadow: SHADOW.card }}>
@@ -85,7 +89,7 @@ export default function Leaderboard({
           )}
           {rest.map((p, i) => {
             const rank = (hasPodium ? 4 : 1) + i;
-            const mv = p.move;
+            const mv = moveOf(p);
             return (
               <Link
                 key={p.uid}

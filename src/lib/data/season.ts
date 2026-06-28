@@ -1,5 +1,5 @@
 // Season calendar + Croatian date helpers (pure; no firebase).
-// The group stage spans 11–27 June 2026, which maps cleanly to its 3 rounds.
+// The group stage spans 11-27 June 2026; knockout starts on 28 June.
 import type { WeekDef } from "@/lib/types";
 
 export const SEASON = "SP 2026";
@@ -11,6 +11,7 @@ export const WEEKS: WeekDef[] = [
   { n: 1, label: "Tjedan 1", range: "11.–17. lip", start: "2026-06-11", end: "2026-06-17" },
   { n: 2, label: "Tjedan 2", range: "18.–23. lip", start: "2026-06-18", end: "2026-06-23" },
   { n: 3, label: "Tjedan 3", range: "24.–27. lip", start: "2026-06-24", end: "2026-06-27" },
+  { n: 4, label: "Tjedan 4", range: "28. lip–4. srp", start: "2026-06-28", end: "2026-07-04" },
 ];
 
 export const MONTHS = ["sij", "velj", "ožu", "tra", "svi", "lip", "srp", "kol", "ruj", "lis", "stu", "pro"];
@@ -50,7 +51,7 @@ export function dayHeading(iso: string, todayIso: string): string {
   return `${WD_FULL[weekdayOf(iso)]}, ${croShort(iso)}`;
 }
 
-/** Week number (1..3) for a fixture date. */
+/** Week number for a fixture date. */
 export function weekOf(iso: string): number {
   const w = WEEKS.find((w) => iso >= w.start && iso <= w.end);
   return w ? w.n : 1;

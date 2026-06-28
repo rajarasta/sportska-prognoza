@@ -2,6 +2,8 @@
 
 /** [home, away] goals. */
 export type Scoreline = [number, number];
+export type MatchStage = "group" | "knockout";
+export type MatchWinner = "home" | "away";
 
 export interface UserDoc {
   uid: string;
@@ -19,6 +21,11 @@ export interface UserDoc {
   bestWeekPoints?: number;
   rank?: number | null;
   prevRank?: number | null;
+  m2TotalPoints?: number;
+  m2WeeklyPoints?: Record<string, number>;
+  m2BestWeekPoints?: number;
+  m2Rank?: number | null;
+  m2PrevRank?: number | null;
   duelsWon?: number;
   duelsLost?: number;
 }
@@ -39,10 +46,14 @@ export interface MatchDoc {
   time: string; // 'HH:MM' (local kickoff label)
   kickoff: number; // epoch ms — authoritative for before/after-kickoff gating
   week: number;
+  stage?: MatchStage;
   home: string; // team code
   away: string; // team code
   status: MatchStatus;
-  res: Scoreline | null; // actual result once final
+  res: Scoreline | null; // 90-minute result once final
+  extraTimeRes?: Scoreline | null; // knockout only: goals in extra time, not cumulative
+  penaltyRes?: Scoreline | null; // knockout only: shootout score, stored but not scored
+  winner?: MatchWinner | null; // knockout only: who advances
   friendly?: boolean; // true for non-WC test/friendly fixtures (no group)
 }
 
@@ -50,11 +61,16 @@ export interface PredictionDoc {
   id: string; // `${matchId}_${uid}`
   matchId: string;
   uid: string;
-  pick: Scoreline;
+  pick: Scoreline; // 90-minute pick
+  extraTimePick?: Scoreline | null; // knockout only: goals in extra time, not cumulative
+  penaltyWinnerPick?: MatchWinner | null; // knockout only: who advances if shootout is reached
+  penaltyPick?: Scoreline | null; // knockout only: optional shootout score, stored but not scored
   submittedAt: number;
   // written by the server only, after the match is final:
   points: number | null; // base scoring of this pick (Gauss + bonus / exact)
   effectivePoints?: number | null; // duel-adjusted contribution to the user's total
+  m2Points?: number | null; // base scoring under Model 2
+  m2EffectivePoints?: number | null; // duel-adjusted contribution under Model 2
   exact: boolean | null;
 }
 
@@ -68,7 +84,13 @@ export interface DuelDoc {
   challengerUid: string;
   opponentUid: string;
   challengerPick: Scoreline;
+  challengerExtraTimePick?: Scoreline | null;
+  challengerPenaltyWinnerPick?: MatchWinner | null;
+  challengerPenaltyPick?: Scoreline | null;
   opponentPick: Scoreline; // locked snapshot of opponent's submitted pick
+  opponentExtraTimePick?: Scoreline | null;
+  opponentPenaltyWinnerPick?: MatchWinner | null;
+  opponentPenaltyPick?: Scoreline | null;
   stake: number; // 6
   status: DuelStatus;
   winnerUid?: string | null; // null = neither won the 2× (normal scoring fallback)

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Anton, Archivo } from "next/font/google";
 import "./globals.css";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import { ScoringModeProvider } from "@/components/ScoringModeProvider";
 
 // Display font — big scores, screen titles. Single weight, condensed/impactful caps.
 const anton = Anton({
@@ -50,7 +51,9 @@ export default function RootLayout({
   return (
     <html lang="hr">
       <body className={`${anton.variable} ${archivo.variable}`}>
-        <div className="app-shell">{children}</div>
+        <ScoringModeProvider>
+          <div className="app-shell">{children}</div>
+        </ScoringModeProvider>
         <ServiceWorkerRegister />
       </body>
     </html>

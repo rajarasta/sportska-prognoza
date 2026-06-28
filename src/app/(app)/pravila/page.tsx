@@ -20,7 +20,7 @@ export default function PravilaHub() {
           accent={C.red}
           emoji="🎯"
           title="KAKO SE BODUJE"
-          sub="Točan rezultat, Gaussova krivulja i bonus za broj golova."
+          sub="Stari Gauss i novi M2 sustav, paralelno za usporedbu."
           watermark={<Icon.trophy s={150} />}
           watermarkColor="#fff"
         />

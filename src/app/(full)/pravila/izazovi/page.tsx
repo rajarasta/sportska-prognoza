@@ -6,9 +6,9 @@ import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
 const STEPS = [
   { n: 1, t: "Imaš 3 izazova svaki tjedan", b: "Token se troši kad pošalješ izazov." },
   { n: 2, t: "Izazivaš tuđi predani tip", b: "Samo na utakmice koje još nisu počele. Tuđe tipove vidiš tek kad predaš svoj." },
-  { n: 3, t: "Igraš svojim predanim tipom", b: "Duel se igra tipom koji si već predao (tip je konačan). Pogodiš točan rezultat → 2× bodova, bez dodataka s Gaussove." },
+  { n: 3, t: "Igraš svojim predanim tipom", b: "Duel se igra tipom koji si već predao (tip je konačan). Pogodiš točan rezultat → 2× točan rezultat." },
   { n: 4, t: "Promašiš → 0 bodova", b: "Ako protivnik pogodi, on nosi duplo, ti ništa." },
-  { n: 5, t: "Oba promaše → normalno", b: "Obojica idete na standardno bodovanje (Gauss + 0,3), bez bonusa." },
+  { n: 5, t: "Oba promaše → normalno", b: "Obojica idete na standardno bodovanje aktivnog sustava (staro ili M2), bez duplog bonusa." },
 ];
 
 export default function PravilaIzazovi() {
@@ -48,7 +48,7 @@ export default function PravilaIzazovi() {
         <div style={{ background: C.goldTintBg2, borderRadius: 14, padding: "12px 16px", display: "flex", gap: 10, alignItems: "center" }}>
           <span style={{ fontSize: 20 }}>🤝</span>
           <span style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12.5, color: C.goldText2, lineHeight: 1.4 }}>
-            Padne li nešto treće (npr. 2:0) i oba promaše → svaki dobiva normalne bodove po Gaussovoj, bez 2× bonusa.
+            Padne li nešto treće (npr. 2:0) i oba promaše → svaki dobiva normalne bodove po sustavu koji gledaš, bez 2× bonusa.
           </span>
         </div>
       </div>

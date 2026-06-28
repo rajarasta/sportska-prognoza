@@ -5,12 +5,46 @@ import Link from "next/link";
 import { Score, Tag, TeamBadge, teamName, matchTag } from "@/components/ui";
 import { Icon } from "@/components/icons";
 import { C, FONT, SHADOW, SAFE } from "@/lib/tokens";
+import { useScoringMode } from "@/components/ScoringModeProvider";
 import { MONTHS_FULL, WD_SHORT_MON, croShort, dayHeading, kickoffLabel, weekOf } from "@/lib/data/season";
 import Countdown from "@/components/Countdown";
 import type { MatchView } from "@/lib/server/queries";
-import type { WeekDef } from "@/lib/types";
+import type { MatchWinner, Scoreline, WeekDef } from "@/lib/types";
 
 type Mode = "dani" | "tjedni";
+
+function winnerName(winner: MatchWinner | null | undefined, home: string, away: string) {
+  if (winner === "home") return teamName(home);
+  if (winner === "away") return teamName(away);
+  return null;
+}
+
+function scoreText(score: Scoreline | null | undefined) {
+  return score ? `${score[0]}:${score[1]}` : null;
+}
+
+function knockoutText({
+  extraTime,
+  penalty,
+  winner,
+  home,
+  away,
+}: {
+  extraTime?: Scoreline | null;
+  penalty?: Scoreline | null;
+  winner?: MatchWinner | null;
+  home: string;
+  away: string;
+}) {
+  const parts: string[] = [];
+  const et = scoreText(extraTime);
+  const pen = scoreText(penalty);
+  const win = winnerName(winner, home, away);
+  if (et) parts.push(`ET ${et}`);
+  if (pen) parts.push(`PEN ${pen}`);
+  if (win) parts.push(`prolazi ${win}`);
+  return parts.join(" · ");
+}
 
 export default function RasporedClient({
   matches,
@@ -228,9 +262,11 @@ export default function RasporedClient({
 }
 
 function MatchCard({ m, nowMs }: { m: MatchView; nowMs: number }) {
+  const { mode: scoringMode } = useScoringMode();
   const done = m.status === "final" && m.res;
   const locked = done || m.status === "live" || nowMs >= m.kickoff;
-  const earned = m.earned ?? 0;
+  const earned = (scoringMode === "old" ? m.earned : m.m2Earned) ?? 0;
+  const secondaryEarned = scoringMode === "old" ? m.m2Earned : m.earned;
   const earnTone = earned >= 3 ? "green" : earned >= 1 ? "gold" : "gray";
 
   return (
@@ -268,7 +304,10 @@ function MatchCard({ m, nowMs }: { m: MatchView; nowMs: number }) {
           <span style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 15, color: C.ink }}>{teamName(m.home)}</span>
         </div>
         {done ? (
-          <Score a={m.res![0]} b={m.res![1]} />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+            <Score a={m.res![0]} b={m.res![1]} />
+            <TinyMeta text={knockoutText({ extraTime: m.extraTimeRes ?? null, penalty: m.penaltyRes ?? null, winner: m.winner ?? null, home: m.home, away: m.away })} />
+          </div>
         ) : (
           <Score a={m.myPick ? m.myPick[0] : null} b={m.myPick ? m.myPick[1] : null} tone={m.myPick ? "ghost" : "open"} />
         )}
@@ -283,10 +322,22 @@ function MatchCard({ m, nowMs }: { m: MatchView; nowMs: number }) {
       <div style={{ marginTop: 12, paddingTop: 11, borderTop: "1px dashed #ECEEF2", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         {done ? (
           <>
-            <span style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12.5, color: C.muted }}>
+            <div style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12.5, color: C.muted }}>
               {m.myPick ? `Tvoj tip ${m.myPick[0]}:${m.myPick[1]}` : "Nisi tipovao"}
-            </span>
-            {m.myPick && <Tag tone={earnTone}>+{earned.toFixed(2)} bodova</Tag>}
+              {m.myPick && (
+                <TinyMeta text={knockoutText({ extraTime: m.myExtraTimePick, penalty: m.myPenaltyPick, winner: m.myPenaltyWinnerPick, home: m.home, away: m.away })} />
+              )}
+            </div>
+            {m.myPick && (
+              <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 2 }}>
+                <Tag tone={earnTone}>+{earned.toFixed(2)} {scoringMode === "old" ? "bodova" : "M2"}</Tag>
+                {secondaryEarned != null && (
+                  <span style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 10.5, color: C.faint }}>
+                    {scoringMode === "old" ? "M2" : "staro"} {secondaryEarned.toFixed(2)}
+                  </span>
+                )}
+              </span>
+            )}
           </>
         ) : m.myPick ? (
           <>
@@ -313,6 +364,15 @@ function MatchCard({ m, nowMs }: { m: MatchView; nowMs: number }) {
         )}
       </div>
     </Link>
+  );
+}
+
+function TinyMeta({ text }: { text: string }) {
+  if (!text) return null;
+  return (
+    <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 10.5, color: C.faint, lineHeight: 1.2 }}>
+      {text}
+    </div>
   );
 }
 

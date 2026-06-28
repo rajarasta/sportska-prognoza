@@ -19,6 +19,7 @@ export default async function AdminPage() {
       id: m.id,
       no: m.no,
       group: m.group,
+      stage: m.stage,
       friendly: m.friendly ?? false,
       home: m.home,
       away: m.away,
@@ -26,6 +27,9 @@ export default async function AdminPage() {
       time: m.time,
       status: m.status,
       res: m.res,
+      extraTimeRes: m.extraTimeRes ?? null,
+      penaltyRes: m.penaltyRes ?? null,
+      winner: m.winner ?? null,
     }));
 
   return <AdminClient matches={list} allowlist={allowlist} adminEmails={adminEmails} />;

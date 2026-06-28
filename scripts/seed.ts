@@ -8,8 +8,9 @@ import { getFirestore } from "firebase-admin/firestore";
 import { NAME_TO_CODE, teamDocs } from "../src/lib/data/teams";
 import { weekOf, ddmmyyyyToIso, kickoffMs, clockTime, WEEKS, SEASON } from "../src/lib/data/season";
 import { FRIENDLY_MATCHES } from "../src/lib/data/test-run";
+import { KNOCKOUT_MATCHES } from "../src/lib/data/knockout";
 import { COLLECTIONS, CONFIG_DOC_ID } from "../src/lib/collections";
-import type { LeagueConfigDoc, MatchDoc, Scoreline } from "../src/lib/types";
+import type { LeagueConfigDoc, MatchDoc, MatchWinner, Scoreline } from "../src/lib/types";
 
 const app = getApps().length ? getApps()[0] : initializeApp(); // ADC
 const db = getFirestore(app);
@@ -56,8 +57,8 @@ function parseSchedule(): MatchDoc[] {
 
 async function main() {
   const teams = teamDocs();
-  // Group-stage fixtures + the pre-WC trial friendlies (week 0).
-  const matches = [...parseSchedule(), ...FRIENDLY_MATCHES];
+  // Group-stage fixtures + knockout fixtures + the pre-WC trial friendlies (week 0).
+  const matches = [...parseSchedule(), ...KNOCKOUT_MATCHES, ...FRIENDLY_MATCHES];
   const config: LeagueConfigDoc = {
     sigma: 1.9,
     exactPoints: 3,
@@ -71,10 +72,27 @@ async function main() {
 
   // Preserve already-played results across re-seeds.
   const existing = await db.collection(COLLECTIONS.matches).get();
-  const played = new Map<string, { status: MatchDoc["status"]; res: Scoreline | null }>();
+  const played = new Map<
+    string,
+    {
+      status: MatchDoc["status"];
+      res: Scoreline | null;
+      extraTimeRes: Scoreline | null;
+      penaltyRes: Scoreline | null;
+      winner: MatchWinner | null;
+    }
+  >();
   existing.forEach((d) => {
     const m = d.data() as MatchDoc;
-    if (m.status === "final") played.set(d.id, { status: "final", res: m.res ?? null });
+    if (m.status === "final") {
+      played.set(d.id, {
+        status: "final",
+        res: m.res ?? null,
+        extraTimeRes: m.extraTimeRes ?? null,
+        penaltyRes: m.penaltyRes ?? null,
+        winner: m.winner ?? null,
+      });
+    }
   });
 
   const batch = db.batch();
@@ -85,7 +103,16 @@ async function main() {
     const keep = played.get(m.id);
     batch.set(
       db.collection(COLLECTIONS.matches).doc(m.id),
-      keep ? { ...m, status: keep.status, res: keep.res } : m,
+      keep
+        ? {
+            ...m,
+            status: keep.status,
+            res: keep.res,
+            extraTimeRes: keep.extraTimeRes,
+            penaltyRes: keep.penaltyRes,
+            winner: keep.winner,
+          }
+        : m,
     );
   }
   batch.set(db.collection(COLLECTIONS.config).doc(CONFIG_DOC_ID), config);

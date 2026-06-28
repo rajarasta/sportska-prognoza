@@ -9,11 +9,14 @@ export default function PravilaBodovanje() {
       <div style={{ background: C.red, color: "#fff", padding: "2px 22px 26px", borderRadius: "0 0 28px 28px" }}>
         <div style={{ fontFamily: FONT.anton, fontSize: 30, lineHeight: 1, marginBottom: 8 }}>SKUPLJANJE BODOVA</div>
         <div style={{ fontFamily: FONT.archivo, fontWeight: 600, fontSize: 13.5, color: "rgba(255,255,255,.85)", lineHeight: 1.45 }}>
-          Tipuješ točan rezultat svake utakmice. Što si bliže, to više bodova — po Gaussovoj krivulji.
+          App paralelno prikazuje staro Gauss bodovanje i novi M2 sustav. Točan rezultat vrijedi 3 boda u oba.
         </div>
       </div>
 
       <div style={{ padding: "18px 16px 0" }}>
+        <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 13, letterSpacing: 0.8, textTransform: "uppercase", color: C.muted, margin: "0 2px 12px" }}>
+          Staro bodovanje
+        </div>
         <TierCard ic="🎯" title="Točan rezultat" pts="3 boda" tone={C.red} body="Pogodiš oba broja golova — puni pogodak, maksimum bodova." />
         <TierCard ic="📊" title="Blizina (Gaussova krivulja)" pts="0–1 bod" tone={C.red} body="Promašaj nosi između 0 i 1 bod, ovisno koliko si daleko. Najmanji promašaj = vrh krivulje = 1 bod." />
         <TierCard ic="➕" title="Bonus za broj golova" pts="+0,3" tone={C.green} body="Ako pogodiš točan broj golova jedne ekipe (a ne cijeli rezultat), dobiješ +0,3 boda povrh Gaussove." />
@@ -34,6 +37,29 @@ export default function PravilaBodovanje() {
           <ExampleRow pick={[2, 8]} note="Pogodio broj golova domaćih (2) → 0,3 + sitno s krivulje jer je 8 jako daleko." total="≈0,4" tone="#C9A227" />
           <ExampleRow pick={[3, 3]} note="Nije pogodio nijedan broj, ali je blizu → skoro vrh krivulje, bez bonusa." total="≈1,0" tone={C.green} />
         </div>
+
+        <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 13, letterSpacing: 0.8, textTransform: "uppercase", color: C.muted, margin: "20px 2px 12px" }}>
+          Novo M2 bodovanje
+        </div>
+        <TierCard ic="🎯" title="Točan rezultat" pts="3 boda" tone={C.red} body="Ako pogodiš cijeli rezultat, odmah dobivaš 3 boda." />
+        <TierCard ic="✅" title="Pogođen ishod" pts="1 + g" tone={C.green} body="Ako je pobjednik ili X točan, dobivaš 1 bod zajamčeno plus do 1 dodatni bod za blizinu rezultata." />
+        <TierCard ic="↔️" title="Kriv ishod" pts="0,5×s + 0,4×g" tone="#C9A227" body="Ako je ishod kriv, ostaješ ispod svakog tko je pogodio ishod, ali dobivaš dio za pogođene golove momčadi i blizinu." />
+
+        <div style={{ background: C.surface, borderRadius: 18, padding: "16px", boxShadow: SHADOW.card, border: "1px solid #F1F2F5", marginBottom: 18 }}>
+          <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 13, letterSpacing: 0.8, textTransform: "uppercase", color: C.muted, marginBottom: 8 }}>
+            M2 formula
+          </div>
+          <div style={{ fontFamily: FONT.archivo, fontWeight: 700, fontSize: 12.5, color: C.muted3, lineHeight: 1.55 }}>
+            g = exp(-d² / 7.22), gdje je d udaljenost između tipa i rezultata. s je broj momčadi kojima si pogodio točan broj golova (0, 1 ili 2). Pravilo prijelaza: pogođen ishod uvijek vrijedi više od promašenog ishoda.
+          </div>
+        </div>
+
+        <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 13, letterSpacing: 0.8, textTransform: "uppercase", color: C.muted, margin: "20px 2px 12px" }}>
+          Knockout M2
+        </div>
+        <TierCard ic="⏱️" title="90 minuta" pts="puni M2" tone={C.red} body="Knockout utakmica prvo se boduje po istom M2 pravilu kao grupa, ali samo na rezultatu nakon 90 minuta." />
+        <TierCard ic="➕" title="Produžetak" pts="M2 / 3" tone={C.green} body="Produžetak se boduje samo ako je nakon 90 minuta bilo neriješeno i tvoj 90-min tip je bio X. Gledaju se samo golovi u produžetku." />
+        <TierCard ic="🥅" title="Penali" pts="+0,5" tone="#C9A227" body="Penali se boduju samo ako je produžetak završio neriješeno i tvoj tip produžetka je bio X. Boduje se samo pogođeni prolaznik; rezultat penala se pamti za kasnije." />
       </div>
     </main>
   );

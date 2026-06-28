@@ -3,6 +3,7 @@
 // tsx CLI (passing its own handle) — no `server-only` barrier.
 import type { Firestore } from "firebase-admin/firestore";
 import { COLLECTIONS } from "@/lib/collections";
+import { isKnockoutMatch } from "@/lib/matches";
 import { runRecompute } from "@/lib/server/recompute";
 import { selectProvider } from "@/lib/server/results-crawler/providers";
 import type { DueMatch, ResultsProvider } from "@/lib/server/results-crawler/types";
@@ -47,7 +48,7 @@ export async function crawlAndApply(db: Firestore, opts: CrawlOptions = {}): Pro
   const matches = snap.docs.map((d) => d.data() as MatchDoc);
   const byId = new Map(matches.map((m) => [m.id, m]));
 
-  const candidates = matches.filter((m) => m.status !== "final");
+  const candidates = matches.filter((m) => !isKnockoutMatch(m) && m.status !== "final");
   const queryable = opts.force ? candidates : candidates.filter((m) => m.kickoff <= now);
   const due: DueMatch[] = queryable.map((m) => ({
     id: m.id,

@@ -9,7 +9,14 @@
 // `@/lib/firebase/admin` raises.
 import type { Firestore } from "firebase-admin/firestore";
 import { COLLECTIONS, CONFIG_DOC_ID } from "@/lib/collections";
-import { scorePick, isExact, DEFAULT_SCORE_CONFIG, type ScoreConfig } from "@/lib/scoring";
+import {
+  scorePick,
+  isExact,
+  DEFAULT_SCORE_CONFIG,
+  M2_EXACT_POINTS,
+  type ScoreConfig,
+} from "@/lib/scoring";
+import { scoreDuelParticipantForMatchM2, scorePredictionForMatchM2 } from "@/lib/m2";
 import { resolveDuel } from "@/lib/duels";
 import type { DuelDoc, LeagueConfigDoc, MatchDoc, PredictionDoc, UserDoc } from "@/lib/types";
 
@@ -64,29 +71,49 @@ export async function runRecompute(db: Firestore): Promise<void> {
 
   // 1. base prediction scoring (compute now, write after duel overrides are known)
   const basePoints = new Map<string, number>();
-  type PredMeta = { id: string; uid: string; matchId: string; points: number | null; exact: boolean | null };
+  const m2BasePoints = new Map<string, number>();
+  type PredMeta = {
+    id: string;
+    uid: string;
+    matchId: string;
+    points: number | null;
+    m2Points: number | null;
+    exact: boolean | null;
+  };
   const predMeta: PredMeta[] = preds.map((p) => {
     const m = matchById.get(p.matchId);
     if (counts(m)) {
       const r = scorePick(p.pick, m.res, sc);
+      const m2 = scorePredictionForMatchM2(p, m);
       basePoints.set(key(p.uid, p.matchId), r.total);
-      return { id: p.id, uid: p.uid, matchId: p.matchId, points: r.total, exact: r.exact };
+      m2BasePoints.set(key(p.uid, p.matchId), m2.total);
+      return {
+        id: p.id,
+        uid: p.uid,
+        matchId: p.matchId,
+        points: r.total,
+        m2Points: m2.total,
+        exact: r.exact,
+      };
     }
     if (isFinal(m)) {
       // friendly final: visible as played, worth zero
-      return { id: p.id, uid: p.uid, matchId: p.matchId, points: 0, exact: false };
+      return { id: p.id, uid: p.uid, matchId: p.matchId, points: 0, m2Points: 0, exact: false };
     }
-    return { id: p.id, uid: p.uid, matchId: p.matchId, points: null, exact: null };
+    return { id: p.id, uid: p.uid, matchId: p.matchId, points: null, m2Points: null, exact: null };
   });
 
   // 2. duel resolution → override participant match points
   const override = new Map<string, number>();
+  const m2Override = new Map<string, number>();
   const won = new Map<string, number>();
   const lost = new Map<string, number>();
   for (const d of duels) {
     const m = matchById.get(d.matchId);
     if (isFinal(m)) {
       const out = resolveDuel(d.challengerPick, d.opponentPick, m.res, sc);
+      const challengerExact = isExact(d.challengerPick, m.res);
+      const opponentExact = isExact(d.opponentPick, m.res);
       const winnerUid =
         out.winner === "challenger" ? d.challengerUid : out.winner === "opponent" ? d.opponentUid : null;
       // Friendly duels resolve (so the izazov shows its outcome) but award no
@@ -94,6 +121,16 @@ export async function runRecompute(db: Firestore): Promise<void> {
       if (counts(m)) {
         override.set(key(d.challengerUid, d.matchId), out.challengerPoints);
         override.set(key(d.opponentUid, d.matchId), out.opponentPoints);
+        if (challengerExact) {
+          m2Override.set(key(d.challengerUid, d.matchId), 2 * M2_EXACT_POINTS);
+          m2Override.set(key(d.opponentUid, d.matchId), 0);
+        } else if (opponentExact) {
+          m2Override.set(key(d.challengerUid, d.matchId), 0);
+          m2Override.set(key(d.opponentUid, d.matchId), 2 * M2_EXACT_POINTS);
+        } else {
+          m2Override.set(key(d.challengerUid, d.matchId), scoreDuelParticipantForMatchM2(d, m, "challenger").total);
+          m2Override.set(key(d.opponentUid, d.matchId), scoreDuelParticipantForMatchM2(d, m, "opponent").total);
+        }
         if (winnerUid) {
           won.set(winnerUid, (won.get(winnerUid) ?? 0) + 1);
           const loserUid = winnerUid === d.challengerUid ? d.opponentUid : d.challengerUid;
@@ -118,20 +155,29 @@ export async function runRecompute(db: Firestore): Promise<void> {
   for (const pm of predMeta) {
     const k = key(pm.uid, pm.matchId);
     const effective = pm.points == null ? null : override.has(k) ? override.get(k)! : pm.points;
+    const m2Effective = pm.m2Points == null ? null : m2Override.has(k) ? m2Override.get(k)! : pm.m2Points;
     bw.update(db.collection(COLLECTIONS.predictions).doc(pm.id), {
       points: pm.points,
       exact: pm.exact,
       effectivePoints: effective,
+      m2Points: pm.m2Points,
+      m2EffectivePoints: m2Effective,
     });
   }
 
   // 3. per-user aggregates (effective per-match points = override ?? base)
-  type Agg = { total: number; weekly: Record<string, number>; exact: number };
+  type Agg = {
+    total: number;
+    weekly: Record<string, number>;
+    m2Total: number;
+    m2Weekly: Record<string, number>;
+    exact: number;
+  };
   const agg = new Map<string, Agg>();
   const ensure = (uid: string): Agg => {
     let a = agg.get(uid);
     if (!a) {
-      a = { total: 0, weekly: {}, exact: 0 };
+      a = { total: 0, weekly: {}, m2Total: 0, m2Weekly: {}, exact: 0 };
       agg.set(uid, a);
     }
     return a;
@@ -146,6 +192,15 @@ export async function runRecompute(db: Firestore): Promise<void> {
     a.total += pts;
     a.weekly[m.week] = (a.weekly[m.week] ?? 0) + pts;
   }
+  for (const k of new Set([...m2BasePoints.keys(), ...m2Override.keys()])) {
+    const [uid, matchId] = k.split("|");
+    const m = matchById.get(matchId);
+    if (!m) continue;
+    const pts = m2Override.has(k) ? m2Override.get(k)! : m2BasePoints.get(k)!;
+    const a = ensure(uid);
+    a.m2Total += pts;
+    a.m2Weekly[m.week] = (a.m2Weekly[m.week] ?? 0) + pts;
+  }
   for (const p of preds) {
     const m = matchById.get(p.matchId);
     if (counts(m) && isExact(p.pick, m.res)) ensure(p.uid).exact += 1;
@@ -158,30 +213,51 @@ export async function runRecompute(db: Firestore): Promise<void> {
   const rankByUid = new Map<string, number>();
   ranked.forEach((r, i) => rankByUid.set(r.uid, i + 1));
 
+  const m2Ranked = users
+    .map((u) => ({ uid: u.uid, total: round2(agg.get(u.uid)?.m2Total ?? 0), exact: agg.get(u.uid)?.exact ?? 0 }))
+    .sort((a, b) => b.total - a.total || b.exact - a.exact);
+  const m2RankByUid = new Map<string, number>();
+  m2Ranked.forEach((r, i) => m2RankByUid.set(r.uid, i + 1));
+
   // 5. write user aggregates
   for (const u of users) {
     const a = agg.get(u.uid);
     const weekly: Record<string, number> = {};
+    const m2Weekly: Record<string, number> = {};
     let best = 0;
+    let m2Best = 0;
     for (const [w, v] of Object.entries(a?.weekly ?? {})) {
       const rv = round2(v);
       weekly[w] = rv;
       best = Math.max(best, rv);
     }
+    for (const [w, v] of Object.entries(a?.m2Weekly ?? {})) {
+      const rv = round2(v);
+      m2Weekly[w] = rv;
+      m2Best = Math.max(m2Best, rv);
+    }
     const newRank = rankByUid.get(u.uid) ?? null;
     const oldRank = u.rank ?? null;
+    const newM2Rank = m2RankByUid.get(u.uid) ?? null;
+    const oldM2Rank = u.m2Rank ?? null;
     // Only advance prevRank when the rank actually changed, so a redundant
     // recompute (e.g. re-saving the same result) doesn't blank the movement arrow.
     const prevRank = newRank === oldRank ? (u.prevRank ?? null) : oldRank;
+    const m2PrevRank = newM2Rank === oldM2Rank ? (u.m2PrevRank ?? null) : oldM2Rank;
     bw.update(db.collection(COLLECTIONS.users).doc(u.uid), {
       totalPoints: round2(a?.total ?? 0),
       weeklyPoints: weekly,
       bestWeekPoints: round2(best),
+      m2TotalPoints: round2(a?.m2Total ?? 0),
+      m2WeeklyPoints: m2Weekly,
+      m2BestWeekPoints: round2(m2Best),
       exactCount: a?.exact ?? 0,
       duelsWon: won.get(u.uid) ?? 0,
       duelsLost: lost.get(u.uid) ?? 0,
       prevRank,
       rank: newRank,
+      m2PrevRank,
+      m2Rank: newM2Rank,
     });
   }
 

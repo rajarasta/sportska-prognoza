@@ -125,9 +125,9 @@ export default function ChallengeSetupClient({ ctx }: { ctx: Ctx }) {
             <Icon.bolt s={18} />
             <span style={{ fontFamily: FONT.anton, fontSize: 17, color: "#1A1206" }}>ULOG DUELA</span>
           </div>
-          <PayoutRow good label="Pogodiš svoj rezultat" val="2× bodova, bez Gaussa" />
+          <PayoutRow good label="Pogodiš svoj rezultat" val="2× točan rezultat" />
           <PayoutRow label="Promašiš (protivnik pogodi)" val="0 bodova" />
-          <PayoutRow label="Oba promaše" val="normalno bodovanje, bez bonusa" />
+          <PayoutRow label="Oba promaše" val="staro/M2 bez duplog bonusa" />
         </div>
 
         {error && (

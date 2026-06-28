@@ -3,14 +3,16 @@
 import type { CSSProperties, ReactNode } from "react";
 import { C, FONT } from "@/lib/tokens";
 import { TEAMS, UNKNOWN_TEAM } from "@/lib/data/teams";
+import { matchStageLabel } from "@/lib/matches";
+import type { MatchStage } from "@/lib/types";
 
 export function teamName(code: string): string {
   return (TEAMS[code] ?? UNKNOWN_TEAM).name;
 }
 
-/** Label for a match's competition slot: "Prijateljska" for friendlies, else "Grupa X". */
-export function matchTag(m: { friendly?: boolean; group: string }): string {
-  return m.friendly ? "Prijateljska" : `Grupa ${m.group}`;
+/** Label for a match's competition slot. */
+export function matchTag(m: { friendly?: boolean; group?: string; stage?: MatchStage }): string {
+  return matchStageLabel(m);
 }
 
 /** Gradient circle with the FIFA code. */

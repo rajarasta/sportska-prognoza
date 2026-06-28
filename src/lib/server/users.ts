@@ -41,6 +41,11 @@ export async function provisionUser(decoded: DecodedIdToken): Promise<UserDoc> {
     bestWeekPoints: 0,
     rank: null,
     prevRank: null,
+    m2TotalPoints: 0,
+    m2WeeklyPoints: {},
+    m2BestWeekPoints: 0,
+    m2Rank: null,
+    m2PrevRank: null,
     duelsWon: 0,
     duelsLost: 0,
   };

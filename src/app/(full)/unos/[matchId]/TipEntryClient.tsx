@@ -9,11 +9,13 @@ import { C, FONT, SAFE } from "@/lib/tokens";
 import { dayHeading, kickoffLabel } from "@/lib/data/season";
 import { submitPrediction } from "@/app/actions/predictions";
 import Countdown from "@/components/Countdown";
-import type { Scoreline } from "@/lib/types";
+import { isKnockoutMatch } from "@/lib/matches";
+import type { MatchStage, MatchWinner, Scoreline } from "@/lib/types";
 
 interface MatchLite {
   id: string;
   group: string;
+  stage?: MatchStage;
   friendly?: boolean;
   home: string;
   away: string;
@@ -34,14 +36,41 @@ export default function TipEntryClient({
   const router = useRouter();
   const [h, setH] = useState(initial ? initial[0] : 1);
   const [a, setA] = useState(initial ? initial[1] : 1);
+  const [etH, setEtH] = useState(0);
+  const [etA, setEtA] = useState(0);
+  const [penWinner, setPenWinner] = useState<MatchWinner>("home");
+  const [penH, setPenH] = useState("");
+  const [penA, setPenA] = useState("");
   const [pending, startTransition] = useTransition();
   const [toast, setToast] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const knockout = isKnockoutMatch(match);
+  const entersExtraTime = knockout && h === a;
+  const entersPenalties = entersExtraTime && etH === etA;
 
   const save = () => {
     setError(null);
+    const hasPenaltyScore = penH.trim() !== "" || penA.trim() !== "";
+    if (entersPenalties && hasPenaltyScore && (penH.trim() === "" || penA.trim() === "")) {
+      setError("Upiši oba broja penala ili ostavi prazno.");
+      return;
+    }
+    const penaltyPick =
+      entersPenalties && hasPenaltyScore
+        ? ([parseInt(penH, 10), parseInt(penA, 10)] as Scoreline)
+        : null;
     startTransition(async () => {
-      const res = await submitPrediction(match.id, [h, a]);
+      const res = await submitPrediction(
+        match.id,
+        [h, a],
+        knockout
+          ? {
+              extraTimePick: entersExtraTime ? [etH, etA] : null,
+              penaltyWinnerPick: entersPenalties ? penWinner : null,
+              penaltyPick,
+            }
+          : undefined,
+      );
       if (res.ok) {
         setToast(`Tip ${h}:${a} predan ✓`);
         setTimeout(() => {
@@ -101,10 +130,51 @@ export default function TipEntryClient({
           <Stepper code={match.away} val={a} set={setA} />
         </div>
 
+        {entersExtraTime && (
+          <div style={{ marginTop: 12, background: C.surface, borderRadius: 18, padding: "16px", boxShadow: "0 1px 3px rgba(14,17,22,.05)" }}>
+            <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 13, color: C.muted, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 12 }}>
+              Produžetak
+            </div>
+            <MiniScorePicker
+              home={match.home}
+              away={match.away}
+              h={etH}
+              a={etA}
+              setH={setEtH}
+              setA={setEtA}
+            />
+          </div>
+        )}
+
+        {entersPenalties && (
+          <div style={{ marginTop: 12, background: C.surface, borderRadius: 18, padding: "16px", boxShadow: "0 1px 3px rgba(14,17,22,.05)" }}>
+            <div style={{ fontFamily: FONT.archivo, fontWeight: 800, fontSize: 13, color: C.muted, letterSpacing: 0.8, textTransform: "uppercase", marginBottom: 12 }}>
+              Penali
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 12 }}>
+              <WinnerButton
+                code={match.home}
+                active={penWinner === "home"}
+                onClick={() => setPenWinner("home")}
+              />
+              <WinnerButton
+                code={match.away}
+                active={penWinner === "away"}
+                onClick={() => setPenWinner("away")}
+              />
+            </div>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <PenaltyInput value={penH} onChange={setPenH} label={`${match.home} penali`} />
+              <span style={{ fontFamily: FONT.anton, fontSize: 18, color: C.faint2 }}>:</span>
+              <PenaltyInput value={penA} onChange={setPenA} label={`${match.away} penali`} />
+            </div>
+          </div>
+        )}
+
         <div style={{ marginTop: 16, background: "linear-gradient(135deg,#FFF7E0,#FFEFC2)", borderRadius: 18, padding: "16px 18px", display: "flex", alignItems: "center", gap: 14 }}>
           <div style={{ fontSize: 26 }}>🎯</div>
           <div style={{ flex: 1, fontFamily: FONT.archivo, fontWeight: 700, fontSize: 13, color: C.goldText, lineHeight: 1.4 }}>
-            Pun pogodak <b>{h}:{a}</b> nosi <b>3 boda</b>. Promašaj nosi 0–1 bod po Gaussovoj + 0,3 za točan broj golova ekipe.
+            Pun pogodak <b>{h}:{a}</b> nosi <b>3 boda</b> u oba sustava. Staro gleda Gauss + golove, M2 prvo gleda ishod pa blizinu rezultata.
           </div>
         </div>
 
@@ -151,6 +221,114 @@ function Stepper({ code, val, set }: { code: string; val: number; set: (n: numbe
   );
 }
 
+function MiniScorePicker({
+  home,
+  away,
+  h,
+  a,
+  setH,
+  setA,
+}: {
+  home: string;
+  away: string;
+  h: number;
+  a: number;
+  setH: (n: number) => void;
+  setA: (n: number) => void;
+}) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: 10 }}>
+      <MiniStepper code={home} val={h} set={setH} />
+      <span style={{ fontFamily: FONT.anton, fontSize: 22, color: C.faint2 }}>:</span>
+      <MiniStepper code={away} val={a} set={setA} />
+    </div>
+  );
+}
+
+function MiniStepper({ code, val, set }: { code: string; val: number; set: (n: number) => void }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minWidth: 0 }}>
+      <button onClick={() => set(Math.max(0, val - 1))} style={smallStepBtn(false)} aria-label={`${code} minus`}>
+        <Icon.minus s={15} />
+      </button>
+      <div style={{ minWidth: 72, display: "flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+        <TeamBadge code={code} size={30} />
+        <span style={{ fontFamily: FONT.anton, fontSize: 30, color: C.ink, lineHeight: 1 }}>{val}</span>
+      </div>
+      <button onClick={() => set(Math.min(12, val + 1))} style={smallStepBtn(true)} aria-label={`${code} plus`}>
+        <Icon.plus s={15} />
+      </button>
+    </div>
+  );
+}
+
+function WinnerButton({
+  code,
+  active,
+  onClick,
+}: {
+  code: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        minHeight: 44,
+        borderRadius: 12,
+        border: active ? `1.5px solid ${C.red}` : `1.5px solid ${C.hairline3}`,
+        background: active ? C.redTintBg : "#fff",
+        color: C.ink,
+        fontFamily: FONT.archivo,
+        fontWeight: 800,
+        fontSize: 12.5,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 7,
+        cursor: "pointer",
+      }}
+    >
+      <TeamBadge code={code} size={24} />
+      {teamName(code)}
+    </button>
+  );
+}
+
+function PenaltyInput({
+  value,
+  onChange,
+  label,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  label: string;
+}) {
+  return (
+    <input
+      type="number"
+      min={0}
+      max={30}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      aria-label={label}
+      placeholder="-"
+      style={{
+        width: 58,
+        height: 38,
+        borderRadius: 10,
+        border: `1.5px solid ${C.hairline3}`,
+        textAlign: "center",
+        fontFamily: FONT.anton,
+        fontSize: 18,
+        color: C.ink,
+        background: "#fff",
+      }}
+    />
+  );
+}
+
 function stepBtn(primary: boolean) {
   return {
     width: 56,
@@ -164,5 +342,22 @@ function stepBtn(primary: boolean) {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+  } as const;
+}
+
+function smallStepBtn(primary: boolean) {
+  return {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    border: "none",
+    cursor: "pointer",
+    background: primary ? C.red : "#fff",
+    color: primary ? "#fff" : C.ink,
+    boxShadow: primary ? "0 4px 10px rgba(228,0,43,.25)" : "inset 0 0 0 1.5px #E2E5EA",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
   } as const;
 }
